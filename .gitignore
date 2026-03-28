@@ -1,0 +1,29 @@
+# ======================
+# Node.js (web)
+# ======================
+web/node_modules/
+web/package-lock.json
+
+# Logs & generated files
+web/logs/*.json
+web/logs/*.html
+web/logs/*.txt
+web/logs/screenshots/*.png
+
+# ======================
+# Python (mobile)
+# ======================
+__pycache__/
+*.pyc
+mobile/__pycache__/
+
+# ======================
+# Environment / secrets
+# ======================
+.env
+
+# ======================
+# OS files
+# ======================
+.DS_Store
+Thumbs.db
