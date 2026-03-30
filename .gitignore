@@ -14,8 +14,25 @@ web/logs/screenshots/*.png
 # Python (mobile)
 # ======================
 __pycache__/
+**/__pycache__/
 *.pyc
-mobile/__pycache__/
+*.pyo
+*.pyd
+
+# Virtual environment
+mobile/venv/
+venv/
+.venv/
+
+# Mobile logs & generated files
+mobile/logs/*.json
+mobile/logs/*.txt
+mobile/logs/screenshots/*.png
+
+# Python egg / dist
+*.egg-info/
+dist/
+build/
 
 # ======================
 # Environment / secrets
