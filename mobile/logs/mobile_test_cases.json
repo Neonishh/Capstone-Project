@@ -1,0 +1,20 @@
+{
+  "objective": "Test login_page",
+  "steps": [
+    {
+      "action": "fill",
+      "target": "Username",
+      "value": "test_value"
+    },
+    {
+      "action": "fill",
+      "target": "Password",
+      "value": "test_value"
+    },
+    {
+      "action": "click",
+      "target": "Login"
+    }
+  ],
+  "expected_result": "User completes flow successfully"
+}

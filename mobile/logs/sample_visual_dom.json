@@ -1,0 +1,20 @@
+{
+  "screen": "login_page",
+  "elements": [
+    {
+      "type": "input",
+      "text": "Username",
+      "bbox": [100, 200, 300, 250]
+    },
+    {
+      "type": "input",
+      "text": "Password",
+      "bbox": [100, 260, 300, 310]
+    },
+    {
+      "type": "button",
+      "text": "Login",
+      "bbox": [120, 330, 280, 380]
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Test Case Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #38bdf8;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 12px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+
+    h2 {
+      color: #22c55e;
+    }
+
+    li {
+      margin: 8px 0;
+    }
+
+    .expected {
+      margin-top: 10px;
+      color: #facc15;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🚀 Generated Test Cases</h1>
+
+<div id="container"></div>
+
+<script>
+fetch('../mobile/logs/mobile_test_cases.json')
+  .then(res => res.json())
+  .then(data => {
+    const container = document.getElementById('container');
+
+    const card = document.createElement('div');
+    card.className = 'card';
+
+    card.innerHTML = `
+      <h2>${data.objective}</h2>
+      <ul>
+        ${data.steps.map((s, i) => `
+          <li><strong>Step ${i + 1}:</strong> ${s.action.toUpperCase()} → ${s.target}</li>
+        `).join('')}
+      </ul>
+      <p class="expected"><strong>Expected:</strong> ${data.expected_result}</p>
+    `;
+
+    container.appendChild(card);
+  });
+</script>
+
+</body>
+</html>
