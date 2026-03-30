@@ -1,274 +1,255 @@
-/**
- * explore.js
- * 
- * Usage:
- *   node explore.js <target_url>
- *   node explore.js https://practice.expandtesting.com
- *
- * Environment variables:
- *   STUB_LLM=true      — run without real LLM (for Day 1/2 testing)
- *   MAX_STEPS=10       — override exploration depth (default 10)
- *   OPENAI_API_KEY=... — required when STUB_LLM is not set
- */
-
 'use strict';
+
+require('dotenv').config();
 
 const { chromium } = require('playwright');
 const path = require('path');
+const fs   = require('fs');
 
-const { getDOMElements, getPageMeta } = require('./src/domExtractor');
+const { getDOMElements, getPageMeta }           = require('./src/domExtractor');
+const { storeStep, saveLog }                    = require('./src/memoryLog');
 const { preprocessDOM, buildExplorationPrompt } = require('./src/preprocess');
-const { storeStep, saveLog } = require('./src/memoryLog');
-const { callLLM, parseAction, executeAction } = require('./src/llmClient');
-const { generateTestCases } = require('./src/testGenerator');
+const { callLLM, parseAction, executeAction }   = require('./src/llmClient');
 
-// ─── Config ───────────────────────────────────────────────────────────────────
-const TARGET_URL  = process.argv[2] || 'https://practice.expandtesting.com';
-const MAX_STEPS   = parseInt(process.env.MAX_STEPS, 10) || 10;
-const STUB_LLM    = process.env.STUB_LLM === 'true';
+const HOME_URL           = process.argv[2] || 'https://demoqa.com';
+const MAX_FLOWS          = 5;
+const MAX_STEPS_PER_FLOW = 12;
+const LOG_DIR            = path.join(__dirname, 'logs');
+const SCREENSHOT_DIR     = path.join(LOG_DIR, 'screenshots');
+const MEMORY_LOG_PATH    = path.join(LOG_DIR, 'memory_log.json');
 
-const LOGS_DIR        = path.join(__dirname, 'logs');
-const SCREENSHOTS_DIR = path.join(LOGS_DIR, 'screenshots');
-const MEMORY_LOG_PATH = path.join(LOGS_DIR, 'memory_log.json');
+if (!fs.existsSync(LOG_DIR))        fs.mkdirSync(LOG_DIR, { recursive: true });
+if (!fs.existsSync(SCREENSHOT_DIR)) fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ── Discover flows from homepage ──────────────────────────────────────────────
+async function discoverFlows(page, elements) {
+  const compactElements = elements.map(el => ({
+    elementId: el.elementId,
+    tag: el.tag,
+    text: el.text || '',
+    selector: el.selector,
+    href: el.href || '',
+  }));
 
-/**
- * takeScreenshot(page, label)
- * Captures a screenshot and returns the relative path string.
- *
- * @param {import('playwright').Page} page
- * @param {string} label  e.g. '1_before_BUTTON'
- * @returns {Promise<string>}  relative path like 'logs/screenshots/1_before_BUTTON.png'
- */
-async function takeScreenshot(page, label) {
-  const filename = `${label}.png`;
-  const fullPath = path.join(SCREENSHOTS_DIR, filename);
+  const prompt = `You are a web exploration agent. Look at the homepage elements below and identify the main navigable sections.
+
+HOMEPAGE ELEMENTS:
+${JSON.stringify(compactElements, null, 2)}
+
+Return a JSON array of flows to explore. Each flow must have:
+- "name": the section name (e.g. "Elements", "Forms")
+- "url": the full absolute URL from the href field
+
+Only include top-level section links — ignore logo, footer, and external links.
+Return ONLY a raw JSON array. No markdown, no explanation.
+
+Example:
+[
+  { "name": "Elements", "url": "https://demoqa.com/elements" },
+  { "name": "Forms", "url": "https://demoqa.com/forms" }
+]`;
+
   try {
-    await page.screenshot({ path: fullPath, fullPage: false });
+    const llmResponse = await callLLM(prompt);
+
+    let parsed;
+    if (Array.isArray(llmResponse)) {
+      parsed = llmResponse;
+    } else if (typeof llmResponse === 'string') {
+      const clean = llmResponse
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/, '')
+        .replace(/\s*```$/, '')
+        .trim();
+      parsed = JSON.parse(clean);
+    } else if (typeof llmResponse === 'object' && llmResponse !== null) {
+      // LLM returned a single object instead of array — wrap it
+      parsed = [llmResponse];
+    } else {
+      parsed = [];
+    }
+
+    const valid = parsed.filter(f => f.name && f.url && f.url.startsWith('http'));
+    console.log(`[explore] Discovered ${valid.length} flows:`, valid.map(f => f.name));
+    return valid.slice(0, MAX_FLOWS);
+
   } catch (err) {
-    console.warn(`[explore] Screenshot failed (${label}):`, err.message);
+    console.error('[explore] Flow discovery failed:', err.message);
+    return [];
   }
-  return `logs/screenshots/${filename}`;
 }
 
-/**
- * delay(ms)
- * Small sleep to allow page transitions to settle.
- */
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-// ─── Main ─────────────────────────────────────────────────────────────────────
-
-async function main() {
-  console.log('═══════════════════════════════════════════════════════');
-  console.log(' Web Exploration Pipeline — Project 101 (PES University)');
-  console.log(`  Target : ${TARGET_URL}`);
-  console.log(`  Max steps : ${MAX_STEPS}`);
-  console.log(`  LLM mode : ${STUB_LLM ? 'STUB (no API call)' : 'LIVE'}`);
-  console.log('═══════════════════════════════════════════════════════\n');
-
-  // ── Ensure output folders exist ───────────────────────────────────────────
-  const fs = require('fs');
-  fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
-  fs.mkdirSync(LOGS_DIR,        { recursive: true });
-
-  // ── Launch Playwright Chromium ────────────────────────────────────────────
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext({
-    userAgent: 'Mozilla/5.0 (compatible; PES-Capstone-Bot/1.0)',
-  });
-  const page = await context.newPage();
-
+// ── Main ──────────────────────────────────────────────────────────────────────
+(async () => {
   const memoryLog = [];
-  let stepCounter = 0;
+  const browser   = await chromium.launch({ headless: false });
+  const page      = await browser.newPage();
 
+  await page.route('**/*', route => {
+    const url = route.request().url();
+    const blocked = [
+      'googlesyndication', 'googletagmanager', 'adsbygoogle', 'doubleclick',
+      'google-analytics', 'googletagservices', 'amazon-adsystem', 'adnxs',
+      'adsystem', 'moatads', 'scorecardresearch', 'outbrain', 'taboola',
+      'disqus', 'cdn.carbonads', 'media.net'
+    ];
+    if (blocked.some(b => url.includes(b))) {
+      route.abort();
+    } else {
+      route.continue();
+    }
+  });
+
+  await page.setViewportSize({ width: 1280, height: 900 });
+
+  // Step 1: Load homepage
+  console.log(`[explore] Loading homepage: ${HOME_URL}`);
   try {
-    // ── Initial navigation ─────────────────────────────────────────────────
-    console.log(`[explore] Navigating to ${TARGET_URL}...`);
-    await page.goto(TARGET_URL, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    const { url: startUrl, title: startTitle } = await getPageMeta(page);
-    console.log(`[explore] Page loaded: "${startTitle}" (${startUrl})\n`);
+    await page.goto(HOME_URL, { waitUntil: 'networkidle', timeout: 60000 });
+    await page.waitForTimeout(3000);
+  } catch (err) {
+    console.error('[explore] Failed to load homepage:', err.message);
+    await browser.close();
+    return;
+  }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  EXPLORATION LOOP  ( extended to MAX_STEPS with all break conditions)
-    // ─────────────────────────────────────────────────────────────────────────
-    while (stepCounter < MAX_STEPS) {
-      console.log(`──────── Step ${stepCounter + 1} / ${MAX_STEPS} ────────`);
+  // Step 2: Extract homepage elements and discover flows
+  console.log('[explore] Extracting homepage elements...');
+  let homeElements;
+  try {
+    const raw = await getDOMElements(page);
+    homeElements = preprocessDOM(raw);
+  } catch (err) {
+    console.error('[explore] Homepage DOM extraction failed:', err.message);
+    await browser.close();
+    return;
+  }
 
-      // 1. Capture page meta BEFORE action
+  console.log(`[explore] Homepage elements found: ${homeElements.length}`);
+  const flows = await discoverFlows(page, homeElements);
+
+  if (flows.length === 0) {
+    console.error('[explore] No flows discovered — exiting.');
+    await browser.close();
+    return;
+  }
+
+  // Step 3: Explore each discovered flow
+  let globalStep = 0;
+  let flowNumber = 0;
+
+  for (const flow of flows) {
+    flowNumber++;
+    console.log(`\n${'═'.repeat(50)}`);
+    console.log(`[explore] ▶ Flow ${flowNumber}/${flows.length}: ${flow.name} → ${flow.url}`);
+    console.log(`${'═'.repeat(50)}`);
+
+    try {
+      await page.goto(flow.url, { waitUntil: 'networkidle', timeout: 60000 });
+      await page.waitForTimeout(3000);
+    } catch (err) {
+      console.error(`[explore] Failed to load ${flow.url}:`, err.message);
+      continue;
+    }
+
+    let stepsInThisFlow = 0;
+
+    while (stepsInThisFlow < MAX_STEPS_PER_FLOW) {
+      console.log(`\n[explore] ══ Step ${globalStep} (Flow: ${flow.name}, flow-step: ${stepsInThisFlow}) ══`);
+
       const { url: fromUrl, title: fromTitle } = await getPageMeta(page);
 
-      // 2. Extract DOM elements
+      const screenshotBeforeName = `${globalStep + 1}_before.png`;
+      await page.screenshot({
+        path: path.join(SCREENSHOT_DIR, screenshotBeforeName),
+        fullPage: true
+      });
+
       let rawElements;
       try {
         rawElements = await getDOMElements(page);
-        console.log(`[explore] Extracted ${rawElements.length} raw elements`);
-      } catch (domErr) {
-        console.error('[explore] getDOMElements() failed:', domErr.message, '— skipping step');
-        stepCounter++;
-        continue;
+      } catch (err) {
+        console.error('[explore] DOM extraction failed:', err.message);
+        rawElements = [];
       }
 
-      // 3. Preprocess DOM 
       const elements = preprocessDOM(rawElements);
-      console.log(`[explore] After preprocessing: ${elements.length} elements (capped at ${50})`);
+      console.log(`[explore] Useful elements found: ${elements.length}`);
 
       if (elements.length === 0) {
-        console.warn('[explore] No interactable elements found — ending exploration');
+        console.log('[explore] No useful elements — moving to next flow.');
         break;
       }
 
-      // 4. Take BEFORE screenshot
-      const screenshotBeforeLabel = `${stepCounter + 1}_before_${elements[0]?.tag || 'page'}`;
-      const screenshotBefore = await takeScreenshot(page, screenshotBeforeLabel);
+      const prompt = buildExplorationPrompt(elements, memoryLog, flow.name);
 
-      // 5. Build prompt (Day 2 work)
-      const prompt = buildExplorationPrompt(elements, memoryLog);
-
-      // 6. Call LLM for next action decision  ← Navya's code handles this
-      let llmResponse;
+      let action;
       try {
-        llmResponse = await callLLM(prompt);
-      } catch (llmErr) {
-        console.error('[explore] callLLM() error:', llmErr.message);
-        // Log the failed step and continue
+        const llmResponse = await callLLM(prompt);
+        action = parseAction(llmResponse);
+        console.log('[explore] LLM decided:', JSON.stringify(action));
+      } catch (err) {
+        console.error('[explore] LLM failed:', err.message);
         storeStep(memoryLog, {
-          step: stepCounter,
-          from_url: fromUrl,
-          from_title: fromTitle,
-          action: 'error',
-          target: 'LLM_FAILURE',
+          step: globalStep, from_url: fromUrl, from_title: fromTitle,
+          action: 'error', target: 'LLM_FAILURE',
           target_element_details: null,
-          to_url: fromUrl,
-          to_title: fromTitle,
-          screenshot_before: screenshotBefore,
-          screenshot_after: screenshotBefore,
+          to_url: fromUrl, to_title: fromTitle,
+          screenshot_before: `logs/screenshots/${screenshotBeforeName}`,
+          screenshot_after:  `logs/screenshots/${screenshotBeforeName}`,
           timestamp: new Date().toISOString(),
-          error: llmErr.message,
         });
-        stepCounter++;
-        continue;
-      }
-
-      // 7. Parse action from LLM response  ← Navya's parseAction()
-      const action = parseAction(llmResponse);
-      console.log(`[explore] LLM action → ${action.action} | selector: "${action.selector}" | reason: ${action.reason}`);
-
-      // 8. Break condition: LLM signals completion
-      if (action.action === 'done') {
-        console.log('[explore] LLM returned "done" — exploration complete');
+        saveLog(memoryLog, MEMORY_LOG_PATH);
         break;
       }
 
-      // 9. Execute the action  ← Navya's executeAction()
-      let executeError = null;
-      try {
-        await executeAction(page, action);
-        await delay(800); // let page settle after action
-      } catch (execErr) {
-        console.error(`[explore] executeAction failed (step ${stepCounter + 1}):`, execErr.message);
-        executeError = execErr.message;
-        // Don't break — log the failure and continue to next step
+      if (action.action === 'done') {
+        console.log(`[explore] Flow "${flow.name}" complete.`);
+        break;
       }
 
-      // 10. Capture page meta AFTER action
-      const { url: toUrl, title: toTitle } = await getPageMeta(page);
-
-      // 11. Take AFTER screenshot
-      const screenshotAfterLabel = `${stepCounter + 1}_after_${action.action}`;
-      const screenshotAfter = await takeScreenshot(page, screenshotAfterLabel);
-
-      // 12. Resolve target element details
       const targetElement = elements.find(el => el.elementId === action.elementId) || null;
 
-      // 13. Store step in memory log (Day 1 work)
-      storeStep(memoryLog, {
-        step: stepCounter,
-        from_url: fromUrl,
-        from_title: fromTitle,
-        action: action.action,
-        target: targetElement ? targetElement.tag : (action.url || action.selector || 'unknown'),
-        target_element_details: targetElement
-          ? {
-              elementId: targetElement.elementId,
-              tag: targetElement.tag,
-              text: targetElement.text,
-              id: targetElement.id,
-              class: targetElement.className,
-              selector: targetElement.selector,
-            }
-          : null,
-        to_url: toUrl,
-        to_title: toTitle,
-        screenshot_before: screenshotBefore,
-        screenshot_after: screenshotAfter,
-        timestamp: new Date().toISOString(),
-        ...(executeError ? { error: executeError } : {}),
-        ...(action.value ? { value: action.value } : {}),
-      });
-
-      console.log(`[explore] Step ${stepCounter + 1} logged | ${fromUrl} → ${toUrl}`);
-
-      // 14. Break condition: loop detection (same URL 3 times in a row)
-      if (memoryLog.length >= 3) {
-        const last3 = memoryLog.slice(-3).map(s => s.to_url);
-        if (last3.every(u => u === toUrl)) {
-          console.warn('[explore] Loop detected (same URL 3 consecutive steps) — ending exploration');
-          break;
-        }
+      let screenshotAfterName = screenshotBeforeName;
+      try {
+        await executeAction(page, action);
+        await page.waitForTimeout(2500);
+        screenshotAfterName = `${globalStep + 1}_after.png`;
+        await page.screenshot({
+          path: path.join(SCREENSHOT_DIR, screenshotAfterName),
+          fullPage: true
+        });
+      } catch (err) {
+        console.error('[explore] Action execution failed:', err.message);
       }
 
-      stepCounter++;
-    }
+      const { url: toUrl, title: toTitle } = await getPageMeta(page);
 
-    // ─────────────────────────────────────────────────────────────────────────
-    //  END OF LOOP
-    // ─────────────────────────────────────────────────────────────────────────
+      storeStep(memoryLog, {
+        step: globalStep, from_url: fromUrl, from_title: fromTitle,
+        action: action.action,
+        target: targetElement ? targetElement.tag : (action.url || action.selector || 'unknown'),
+        target_element_details: targetElement || {
+          elementId: action.elementId, tag: '', text: '',
+          id: null, class: '', selector: action.selector,
+        },
+        to_url: toUrl, to_title: toTitle,
+        screenshot_before: `logs/screenshots/${screenshotBeforeName}`,
+        screenshot_after:  `logs/screenshots/${screenshotAfterName}`,
+        timestamp: new Date().toISOString(),
+      });
 
-    console.log(`\n[explore] Exploration complete — ${memoryLog.length} step(s) logged`);
-
-    // Save memory log (Day 1 saveLog)
-    saveLog(memoryLog, MEMORY_LOG_PATH);
-
-    // Verify screenshot count
-    const screenshots = fs.readdirSync(SCREENSHOTS_DIR).filter(f => f.endsWith('.png'));
-    console.log(`[explore] Screenshots captured: ${screenshots.length} (expected ~${memoryLog.length * 2})`);
-
-    // ── Day 3: Generate test cases from memory log ─────────────────────────
-    if (memoryLog.length > 0) {
-      console.log('\n[explore] Generating test cases from memory log...');
-      await generateTestCases(memoryLog);
-    }
-
-  } catch (fatalErr) {
-    console.error('\n[explore] FATAL ERROR:', fatalErr.message);
-    console.error(fatalErr.stack);
-
-    // Still save whatever was collected
-    if (memoryLog.length > 0) {
-      console.log('[explore] Saving partial memory log before exit...');
       saveLog(memoryLog, MEMORY_LOG_PATH);
+      console.log(`[explore] Step ${globalStep} done: ${fromUrl} → ${toUrl}`);
+
+      globalStep++;
+      stepsInThisFlow++;
     }
 
-  } finally {
-    await browser.close();
-    console.log('\n[explore] Browser closed. Done.');
-
-    // Final summary
-    console.log('\n══════════════════════════════════════');
-    console.log(' OUTPUT FILES:');
-    console.log(`  • ${MEMORY_LOG_PATH}`);
-    console.log(`  • ${path.join(LOGS_DIR, 'test_cases.json')}`);
-    console.log(`  • ${SCREENSHOTS_DIR}/`);
-    console.log('══════════════════════════════════════\n');
+    console.log(`[explore] ✓ Flow "${flow.name}" finished.`);
   }
-}
 
-// ── Entry point ───────────────────────────────────────────────────────────────
-main().catch(err => {
-  console.error('[explore] Unhandled error:', err.message);
-  process.exit(1);
-});
+  console.log('\n[explore] ✅ All flows explored.');
+  console.log(`[explore] Total steps logged: ${memoryLog.length}`);
+  await browser.close();
+})();

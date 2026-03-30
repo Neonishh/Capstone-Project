@@ -11,5 +11,9 @@
   "description": "",
   "devDependencies": {
     "playwright": "^1.58.1"
+  },
+  "dependencies": {
+    "dotenv": "^16.6.1",
+    "groq-sdk": "^1.1.2"
   }
 }
