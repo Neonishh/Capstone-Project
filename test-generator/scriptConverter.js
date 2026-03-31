@@ -1,8 +1,9 @@
 const fs = require('fs');
+const path = require('path');
 
-const data = JSON.parse(
-  fs.readFileSync('../mobile/logs/mobile_test_cases.json')
-);
+const filePath = path.join(__dirname, '../mobile/logs/mobile_test_cases.json');
+const data = JSON.parse(fs.readFileSync(filePath));
+
 let script = `
 const { test, expect } = require('@playwright/test');
 
@@ -30,6 +31,8 @@ script += `
 });
 `;
 
-fs.writeFileSync('scripts/test.spec.js', script);
+const outputPath = path.join(__dirname, 'scripts', 'test.spec.js');
+
+fs.writeFileSync(outputPath, script);
 
 console.log("✅ Script generated");

@@ -1,0 +1,17 @@
+[
+    {
+      "app_id": 1,
+      "objective": "Verify basic search functionality works",
+      "steps": [
+        { "step_number": 1, "action": "navigate", "selector": "", "value": "https://example.com" },
+        { "step_number": 2, "action": "navigate", "selector": "", "value": "https://bing.com" } 
+      ]
+    },
+    {
+      "app_id": 1,
+      "objective": "Check Wikipedia routing",
+      "steps": [
+        { "step_number": 1, "action": "navigate", "selector": "", "value": "https://www.wikipedia.org/" }
+      ]
+    }
+  ]

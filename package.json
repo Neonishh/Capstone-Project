@@ -1,0 +1,27 @@
+{
+  "name": "code-base",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Neonishh/Capstone-Project.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Neonishh/Capstone-Project/issues"
+  },
+  "homepage": "https://github.com/Neonishh/Capstone-Project#readme",
+  "dependencies": {
+    "sqlite3": "^6.0.1"
+  }
+}
