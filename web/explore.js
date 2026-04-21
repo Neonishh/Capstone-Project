@@ -145,10 +145,16 @@ Example:
     console.log(`${'═'.repeat(50)}`);
 
     try {
-      await page.goto(flow.url, { waitUntil: 'networkidle', timeout: 60000 });
+      if (flow.url && flow.url.startsWith('http')) {
+        // Flow has a direct URL — navigate to it
+        await page.goto(flow.url, { waitUntil: 'networkidle', timeout: 60000 });
+      } else {
+        console.error(`[explore] Flow "${flow.name}" has invalid URL — skipping.`);
+        continue;
+      }
       await page.waitForTimeout(3000);
     } catch (err) {
-      console.error(`[explore] Failed to load ${flow.url}:`, err.message);
+      console.error(`[explore] Failed to access flow "${flow.name}":`, err.message);
       continue;
     }
 
@@ -249,7 +255,7 @@ Example:
     console.log(`[explore] ✓ Flow "${flow.name}" finished.`);
   }
 
-  console.log('\n[explore] ✅ All flows explored.');
+  console.log('\n[explore]  All flows explored.');
   console.log(`[explore] Total steps logged: ${memoryLog.length}`);
   await browser.close();
 })();
