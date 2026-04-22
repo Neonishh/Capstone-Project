@@ -41,7 +41,6 @@ TEST_CASES_PATH = str(LOGS_DIR / "mobile_test_cases.json")
 DEFAULT_APP_PACKAGE  = "com.android.settings"
 DEFAULT_APP_ACTIVITY = ".Settings"
 
-
 def take_screenshot(driver, label: str) -> str:
     filename = f"{label}.png"
     full_path = SCREENSHOTS_DIR / filename
@@ -50,7 +49,6 @@ def take_screenshot(driver, label: str) -> str:
     except Exception as e:
         print(f"[explore_mobile] Screenshot failed ({label}): {e}")
     return f"logs/screenshots/{filename}"
-
 
 
 def build_driver(app_package: str, app_activity: str):
@@ -65,6 +63,7 @@ def build_driver(app_package: str, app_activity: str):
     options.app_activity = app_activity
     options.no_reset = True
     options.auto_grant_permissions = True
+    options.app_wait_activity = "*"
 
     appium_url = f"http://{APPIUM_HOST}:{APPIUM_PORT}"
     print(f"[explore_mobile] Connecting to Appium at {appium_url}...")
@@ -73,6 +72,7 @@ def build_driver(app_package: str, app_activity: str):
 
     print("[explore_mobile] Connected.")
     return driver
+
 
 def main():
     parser = argparse.ArgumentParser(description="Mobile UI Exploration Pipeline")

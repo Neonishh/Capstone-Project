@@ -9,7 +9,9 @@ Responsibility:
 
 Environment variables:
   STUB_LLM=true        — run without real LLM (returns done action)
-  LLM_PROVIDER=openai  — which LLM backend to use (openai | gemini | stub)
+  LLM_PROVIDER=groq    — which LLM backend to use (groq | openai)
+  GROQ_API_KEY=...     — required when LLM_PROVIDER=groq
+  GROQ_MODEL=...       — optional, defaults to llama3-8b-8192
   OPENAI_API_KEY=...   — required when LLM_PROVIDER=openai
   OPENAI_MODEL=...     — optional, defaults to gpt-4o-mini
 """
@@ -19,7 +21,7 @@ import os
 import time
 
 STUB_MODE = os.environ.get("STUB_LLM", "false").lower() == "true"
-LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "openai").lower()
+LLM_PROVIDER = os.environ.get("LLM_PROVIDER", "groq").lower()
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -48,12 +50,15 @@ def call_llm(prompt: str) -> dict:
             "reason": "Stub mode active — LLM not wired yet",
         }
 
+    if LLM_PROVIDER == "groq":
+        return _call_groq(prompt)
+
     if LLM_PROVIDER == "openai":
         return _call_openai(prompt)
 
     raise RuntimeError(
         f"[llm_client] Unknown LLM_PROVIDER='{LLM_PROVIDER}'. "
-        "Set STUB_LLM=true or LLM_PROVIDER=openai."
+        "Set STUB_LLM=true or LLM_PROVIDER=groq."
     )
 
 
@@ -156,6 +161,34 @@ def execute_action(driver, action: dict, elements: list) -> None:
 
 
 # ── Private helpers ───────────────────────────────────────────────────────────
+
+def _call_groq(prompt: str) -> dict:
+    """Calls Groq API and returns parsed JSON dict."""
+    try:
+        from groq import Groq
+    except ImportError:
+        raise RuntimeError(
+            "[llm_client] groq package not installed. Run: pip install groq"
+        )
+
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "[llm_client] GROQ_API_KEY environment variable not set."
+        )
+
+    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    client = Groq(api_key=api_key)
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+    )
+
+    raw = response.choices[0].message.content
+    return parse_action(raw)
+
 
 def _call_openai(prompt: str) -> dict:
     """Calls OpenAI chat completions API and returns parsed JSON dict."""
