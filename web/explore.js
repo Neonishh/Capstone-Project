@@ -312,6 +312,23 @@ function isSameOrigin(target, base) {
  */
 async function discoverFlows(elements) {
 
+  const demoQaFallback =
+    selectTopLevelFeatures(elements, MAX_FLOWS);
+
+  if (demoQaFallback.length) {
+    console.log(
+      '[explore] Using deterministic DemoQA top-level feature selection.'
+    );
+
+    return demoQaFallback.map(feature => ({
+      name: feature.name,
+      description: `Primary DemoQA feature category: ${feature.name}`,
+      entryElementId: feature.elementId,
+      entryUrl: resolveUrl(feature.href, HOME_URL)
+    }));
+  }
+
+
   const compactElements =
     elements.map(element => ({
       elementId:
@@ -635,12 +652,139 @@ If no meaningful control group is present, return []
   }
 }
 
+function normalizeFeatureName(value) {
+  return String(value || '').trim();
+}
+
+function selectTopLevelFeatures(elements, maxFeatures = 5) {
+  if (!Array.isArray(elements) || !elements.length) {
+    return [];
+  }
+
+  const topLevel = elements
+    .filter(element => {
+      const tag = (element.tag || '').toUpperCase();
+      const text = normalizeFeatureName(element.text || element.label || element.ariaLabel || element.id || '');
+      const href = (element.href || '').toLowerCase();
+
+      if (tag !== 'A' && tag !== 'BUTTON' && tag !== 'DIV') {
+        return false;
+      }
+
+      if (!text && !href) {
+        return false;
+      }
+
+      const lowerText = text.toLowerCase();
+      const isDemoQaMainCategory = [
+        'elements',
+        'forms',
+        'alerts',
+        'frame',
+        'windows',
+        'widgets',
+        'interactions',
+        'book store',
+        'bookstore'
+      ].some(keyword => lowerText.includes(keyword) || href.includes(keyword));
+
+      if (!isDemoQaMainCategory) {
+        return false;
+      }
+
+      return !(
+        lowerText.includes('book store') ||
+        lowerText.includes('bookstore') ||
+        href.includes('books') ||
+        href.includes('/books')
+      );
+    })
+    .map(element => ({
+      name: normalizeFeatureName(element.text || element.label || element.ariaLabel || element.id || ''),
+      href: element.href || '',
+      elementId: element.elementId,
+      selector: element.selector || ''
+    }))
+    .filter(item => item.name)
+    .slice(0, maxFeatures);
+
+  return topLevel;
+}
+
+function selectPageSubFeatures(elements, maxSubFeatures = 2) {
+  if (!Array.isArray(elements) || !elements.length) {
+    return [];
+  }
+
+  const groupings = [];
+
+  const linkEntries = elements
+    .filter(element => {
+      const tag = (element.tag || '').toUpperCase();
+      const text = normalizeFeatureName(element.text || element.label || element.ariaLabel || element.id || '');
+      if (tag !== 'A') return false;
+      return text.length > 0;
+    })
+    .map(element => ({
+      name: normalizeFeatureName(element.text || element.label || element.ariaLabel || element.id || ''),
+      href: element.href || '',
+      elementId: element.elementId,
+      selector: element.selector || ''
+    }))
+    .filter(item => item.name && !item.name.toLowerCase().includes('home'));
+
+  for (const item of linkEntries.slice(0, maxSubFeatures)) {
+    groupings.push({
+      kind: 'link',
+      name: item.name,
+      href: item.href,
+      elementId: item.elementId,
+      selector: item.selector
+    });
+  }
+
+  if (groupings.length < maxSubFeatures) {
+    const formEntries = elements.filter(element => {
+      const tag = (element.tag || '').toUpperCase();
+      const type = (element.inputType || '').toLowerCase();
+      if (tag !== 'INPUT') return false;
+      if (['hidden', 'submit', 'button', 'checkbox', 'radio', 'file', 'image', 'reset', 'color', 'range'].includes(type)) {
+        return false;
+      }
+      return true;
+    });
+
+    for (const element of formEntries.slice(0, maxSubFeatures - groupings.length)) {
+      const name = normalizeFeatureName(element.label || element.placeholder || element.name || element.ariaLabel || element.id || '');
+      if (!name) continue;
+      groupings.push({
+        kind: 'form',
+        name,
+        elementId: element.elementId,
+        selector: element.selector || ''
+      });
+    }
+  }
+
+  return groupings.slice(0, maxSubFeatures);
+}
+
 function selectRelevantSubFeatures(elements, maxSubFeatures = 2) {
   if (!Array.isArray(elements) || !elements.length) {
     return [];
   }
 
-  const selected = [];
+  const selected = selectPageSubFeatures(elements, maxSubFeatures);
+
+  if (selected.length >= maxSubFeatures) {
+    return selected.map(item => ({
+      kind: item.kind,
+      name: item.name,
+      elements: elements.filter(element => element.elementId === item.elementId)
+    }));
+  }
+
+  const fallback = [];
 
   const textInputs = elements.filter(element => {
     const tag = (element.tag || '').toUpperCase();
@@ -681,41 +825,41 @@ function selectRelevantSubFeatures(elements, maxSubFeatures = 2) {
   });
 
   if (textInputs.length) {
-    selected.push({
+    fallback.push({
       kind: 'form',
       elements: textInputs.slice(0, 3)
     });
   }
 
   const checkboxInputs = elements.filter(element => (element.inputType || '').toLowerCase() === 'checkbox');
-  if (checkboxInputs.length && selected.length < maxSubFeatures) {
-    selected.push({
+  if (checkboxInputs.length && fallback.length < maxSubFeatures) {
+    fallback.push({
       kind: 'checkbox',
       elements: checkboxInputs.slice(0, 2)
     });
   }
 
-  if (!checkboxInputs.length && selected.length < maxSubFeatures) {
+  if (!checkboxInputs.length && fallback.length < maxSubFeatures) {
     const radioInputs = elements.filter(element => (element.inputType || '').toLowerCase() === 'radio');
     if (radioInputs.length) {
-      selected.push({
+      fallback.push({
         kind: 'radio',
         elements: radioInputs.slice(0, 2)
       });
     }
   }
 
-  if (selected.length < maxSubFeatures) {
+  if (fallback.length < maxSubFeatures) {
     const selects = elements.filter(element => (element.tag || '').toUpperCase() === 'SELECT');
     if (selects.length) {
-      selected.push({
+      fallback.push({
         kind: 'select',
         elements: selects.slice(0, 1)
       });
     }
   }
 
-  if (selected.length < maxSubFeatures) {
+  if (fallback.length < maxSubFeatures) {
     const actionButtons = elements.filter(element => {
       const tag = (element.tag || '').toUpperCase();
       const role = (element.role || '').toLowerCase();
@@ -738,14 +882,14 @@ function selectRelevantSubFeatures(elements, maxSubFeatures = 2) {
     });
 
     if (actionButtons.length) {
-      selected.push({
+      fallback.push({
         kind: 'button',
         elements: actionButtons.slice(0, 1)
       });
     }
   }
 
-  return selected.slice(0, maxSubFeatures);
+  return fallback.slice(0, maxSubFeatures);
 }
 
 function shouldCaptureScreenshot(action, step, captureEveryStep = false) {
@@ -948,18 +1092,52 @@ async function performAndLog(
       action === 'click'
     ) {
 
-      const locator =
-        page.locator(
-          element.selector
-        ).first();
+      if (!element.selector) {
+        const url =
+          element.href
+            ? resolveUrl(element.href, page.url())
+            : '';
 
-      await locator.scrollIntoViewIfNeeded({
-        timeout: 8000
-      });
+        if (url) {
+          await page.goto(url, {
+            waitUntil: 'domcontentloaded',
+            timeout: 15000
+          });
+        }
 
-      await locator.click({
-        timeout: 8000
-      });
+      } else {
+        const locator =
+          page.locator(
+            element.selector
+          ).first();
+
+        try {
+          await locator.scrollIntoViewIfNeeded({
+            timeout: 8000
+          });
+
+          await locator.click({
+            timeout: 8000,
+            force: false
+          });
+        } catch (firstClickErr) {
+          try {
+            await locator.click({
+              timeout: 10000,
+              force: true
+            });
+          } catch (forcedClickErr) {
+            await page.evaluate((selector) => {
+              const candidate = document.querySelector(selector);
+              if (candidate && candidate instanceof HTMLElement) {
+                candidate.click();
+                return true;
+              }
+              return false;
+            }, element.selector);
+          }
+        }
+      }
 
       await page.waitForTimeout(500);
     }
@@ -1128,6 +1306,31 @@ async function exploreCurrentPage(
       Array.isArray(group.elements)
         ? group.elements
         : [];
+
+    if (group.kind === 'link') {
+      const linkElements =
+        groupElements.length
+          ? groupElements
+          : [group];
+
+      for (const element of linkElements) {
+        if (
+          state.flowActionCount >=
+          MAX_ACTIONS_PER_PAGE
+        ) {
+          break;
+        }
+
+        await performAndLog(
+          page,
+          flow,
+          state,
+          'click',
+          element,
+          'link'
+        );
+      }
+    }
 
     if (group.kind === 'form') {
       for (const element of groupElements) {
@@ -1638,5 +1841,7 @@ module.exports = {
   discoverFlows,
   shouldCaptureScreenshot,
   selectRelevantSubFeatures,
+  selectTopLevelFeatures,
+  selectPageSubFeatures,
   askLLMForSubFeatures
 };
