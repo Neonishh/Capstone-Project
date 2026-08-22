@@ -225,10 +225,57 @@ async function getDOMElements(page) {
         }
 
 
-        // Fall back to a structural selector.
         const tag =
           element.tagName.toLowerCase();
 
+
+        // ------------------------------------------------------------------
+        // Anchor href selector.
+        //
+        // IMPORTANT: this must come before the generic structural fallback.
+        //
+        // Many sites reuse generic ids (e.g. "item-0", "item-1", "item-2")
+        // on every page for sidebar/list items. If we fall back to
+        // "li#item-1 > a", that selector is NOT unique to a single link -
+        // it will re-match a completely different link once the page
+        // navigates elsewhere, causing clicks to silently land on the
+        // wrong destination.
+        //
+        // An exact href match is the most stable, semantically correct
+        // selector for a navigation link, so we prefer it whenever it is
+        // unique on the page.
+        // ------------------------------------------------------------------
+
+        if (tag === 'a') {
+
+          const hrefAttr =
+            element.getAttribute('href');
+
+          if (
+            hrefAttr &&
+            hrefAttr.trim() !== '' &&
+            hrefAttr.trim() !== '#'
+          ) {
+
+            const hrefSelector =
+              `a[href="${CSS.escape(hrefAttr)}"]`;
+
+            try {
+
+              if (
+                document.querySelectorAll(hrefSelector).length === 1
+              ) {
+                return hrefSelector;
+              }
+
+            } catch (_) {
+              // Fall through to the structural selector below.
+            }
+          }
+        }
+
+
+        // Fall back to a structural selector.
         let current = element;
         const path = [];
 

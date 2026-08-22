@@ -51,7 +51,8 @@ const {
 } = require('./src/preprocess');
 
 const {
-  callLLM
+  callLLM,
+  parseJSONResponse
 } = require('./src/llmClient');
 
 const {
@@ -629,7 +630,18 @@ If no meaningful control group is present, return []
       temperature: 0.1
     });
 
-    const parsed = JSON.parse(response);
+    let parsed;
+
+    try {
+      parsed = parseJSONResponse(response);
+    } catch (parseErr) {
+      console.warn(
+        '[explore] Sub-feature LLM response was not valid JSON ' +
+        '(even after stripping markdown fences) - using heuristic fallback:',
+        parseErr.message
+      );
+      return [];
+    }
 
     if (!Array.isArray(parsed)) {
       return [];
@@ -648,6 +660,10 @@ If no meaningful control group is present, return []
 
     return normalized;
   } catch (err) {
+    console.warn(
+      '[explore] Sub-feature LLM call failed - using heuristic fallback:',
+      err.message
+    );
     return [];
   }
 }
@@ -1551,11 +1567,9 @@ async function exploreFlow(
     /*
      * IMPORTANT:
      *
-     * We deliberately do NOT recursively crawl every link/sub-feature.
-     *
-     * The LLM already selected the major feature.
-     *
-     * This prevents:
+     * We do NOT crawl every link on every page - askLLMForSubFeatures /
+     * selectRelevantSubFeatures already cap each page to at most 2
+     * meaningful interaction groups, so this never turns into:
      *
      * Elements
      *   -> Text Box
@@ -1567,12 +1581,23 @@ async function exploreFlow(
      *   -> Broken Links
      *   -> ...
      *
-     * from becoming dozens of additional exploration branches.
+     * But if one of those 1-2 selected interactions was a navigation
+     * (e.g. clicking the "Text Box" sidebar link), the browser is now
+     * sitting on a NEW page that has not been explored yet. Stopping
+     * here would mean we only ever discover that a sub-page exists,
+     * without ever exercising the actual controls on it (filling the
+     * Text Box fields, checking the Check Box tree, etc).
      *
-     * The selected feature itself is exercised instead.
+     * So the loop is allowed to continue: the next iteration checks
+     * whether the current URL has already been visited (see
+     * visitedPages above) and, if not, extracts and interacts with
+     * THIS new page too - up to MAX_PAGES_PER_FLOW pages total for this
+     * flow. If the interaction did NOT navigate anywhere (e.g. it was a
+     * plain fill/check performed directly on the entry page), the URL
+     * is unchanged on the next iteration and the loop exits naturally
+     * via the visitedPages check above - so entry pages that ARE the
+     * functional page (e.g. a practice form) still only run once.
      */
-
-    break;
   }
 
 

@@ -56,9 +56,24 @@ const RAW_RESPONSE_PATH =
   );
 
 
+// ----------------------------------------------------------------------------
 // Number of test cases requested from the LLM.
-const MIN_TEST_CASES = 3;
-const MAX_TEST_CASES = 5;
+//
+// IMPORTANT: this is now a PER-FLOW target, not a global cap.
+//
+// Each explored flow/feature should end up with its own small set of test
+// cases (ideally one positive, one negative, one boundary - but negative/
+// boundary cases are only generated when the exploration evidence actually
+// supports them; see buildTestCasePrompt rule 7).
+// ----------------------------------------------------------------------------
+
+const TEST_CASES_PER_FLOW =
+  Number(process.env.TEST_CASES_PER_FLOW) || 3;
+
+// Hard ceiling on the whole run so a large number of flows can't blow past
+// reasonable token/rate limits in a single call.
+const MAX_TOTAL_TEST_CASES =
+  Number(process.env.MAX_TOTAL_TEST_CASES) || 24;
 
 
 // ============================================================================
@@ -103,10 +118,26 @@ async function generateTestCases(context) {
   }
 
 
+  const flowCount =
+    Array.isArray(context.flows)
+      ? context.flows.length
+      : (statistics.flowCount || 1);
+
+  const targetTestCases =
+    Math.min(
+      MAX_TOTAL_TEST_CASES,
+      Math.max(
+        TEST_CASES_PER_FLOW,
+        flowCount * TEST_CASES_PER_FLOW
+      )
+    );
+
+
   console.log(
-    `[testGenerator] Generating test cases from ` +
+    `[testGenerator] Generating ~${TEST_CASES_PER_FLOW} test case(s) per flow ` +
+    `(target ${targetTestCases} total) from ` +
     `${statistics.totalSteps} exploration step(s) ` +
-    `across ${statistics.flowCount || 0} flow(s)...`
+    `across ${flowCount} flow(s)...`
   );
 
 
@@ -115,11 +146,19 @@ async function generateTestCases(context) {
   // --------------------------------------------------------------------------
 
   const prompt =
-    buildTestCasePrompt(context);
+    buildTestCasePrompt(
+      context,
+      TEST_CASES_PER_FLOW,
+      targetTestCases
+    );
 
 
   // --------------------------------------------------------------------------
   // Call LLM.
+  //
+  // maxTokens scales with the target test case count so a run with several
+  // flows still has room to actually return all of them instead of being
+  // truncated mid-response.
   // --------------------------------------------------------------------------
 
   let rawResponse;
@@ -130,7 +169,10 @@ async function generateTestCases(context) {
       await callLLM(
         prompt,
         {
-          maxTokens: 1800,
+          maxTokens: Math.min(
+            6000,
+            600 + targetTestCases * 220
+          ),
           temperature: 0.2
         }
       );
@@ -233,17 +275,26 @@ async function generateTestCases(context) {
 // ============================================================================
 
 /**
- * buildTestCasePrompt(context)
+ * buildTestCasePrompt(context, testCasesPerFlow, targetTotal)
  *
  * Creates a compact but sufficiently detailed prompt for the test-generation
  * LLM.
  */
-function buildTestCasePrompt(context) {
+function buildTestCasePrompt(
+  context,
+  testCasesPerFlow = TEST_CASES_PER_FLOW,
+  targetTotal = null
+) {
 
   const compactContext =
     compactContextForLLM(
       context
     );
+
+  const flowNames =
+    Array.isArray(context.flows)
+      ? context.flows.map(flow => flow.name || 'Unknown Flow')
+      : [];
 
 
   return `
@@ -252,7 +303,7 @@ You are a senior QA engineer generating functional web application test cases.
 The application was autonomously explored by a browser agent.
 
 The information below contains ONLY functionality and UI information observed
-during that exploration.
+during that exploration, organized by FLOW (one flow = one explored feature).
 
 Your job is to convert the observed functionality into executable functional
 test cases.
@@ -267,37 +318,51 @@ IMPORTANT RULES:
 3. Test cases should represent meaningful user behavior rather than simply
    repeating every exploration action.
 
-4. Generate ${MIN_TEST_CASES} to ${MAX_TEST_CASES} test cases when enough
-   functionality was discovered.
+4. PER-FLOW COVERAGE (this is the most important rule):
+   For EACH flow listed below (${flowNames.length ? flowNames.join(', ') : 'see context'}),
+   generate ${testCasesPerFlow} test cases dedicated to that flow:
+     - Exactly 1 "positive" test covering the normal/expected behavior
+       observed for that flow.
+     - 1 "negative" test ONLY if the exploration evidence for that flow
+       supports one (e.g. a required field, a validation-looking control,
+       an error state actually observed). If there is no such evidence,
+       use an additional "positive" variation instead - do NOT invent a
+       negative scenario.
+     - 1 "boundary" test ONLY if the exploration evidence for that flow
+       supports one (e.g. a field with an observed length/format
+       constraint, a min/max control). If there is no such evidence, use
+       an additional "positive" variation instead - do NOT invent a
+       boundary scenario.
+   A flow with only navigation evidence (no forms/inputs observed) should
+   still get ${testCasesPerFlow} "positive" test cases covering different
+   reasonable ways to exercise that navigation, rather than being skipped.
 
-5. Cover different meaningful flows where possible.
+5. Do not skip a flow that appears in the context, even if it only has a
+   small number of observed actions.
 
-6. Prefer a mixture of:
-   - positive/normal scenarios
-   - validation/negative scenarios
-   - boundary scenarios when the observed UI supports them
+6. Do not create a negative or boundary test if the explored UI provides no
+   reasonable evidence for it - use another positive variation instead.
 
-7. Do not create a negative or boundary test if the explored UI provides no
-   reasonable evidence for it.
+7. A test case must be executable using Playwright.
 
-8. A test case must be executable using Playwright.
-
-9. Every step must contain:
+8. Every step must contain:
    - action
    - selector
    - value when required
    - description
 
-10. For navigation steps, use the observed URL when available.
+9. For navigation steps, use the observed URL when available.
 
-11. Do not use XPath unless absolutely necessary.
+10. Do not use XPath unless absolutely necessary.
 
-12. Do not invent expected UI messages.
+11. Do not invent expected UI messages.
 
-13. Expected results must be based on observed page transitions, titles,
+12. Expected results must be based on observed page transitions, titles,
     controls, or other evidence in the exploration context.
 
-OBSERVED EXPLORATION CONTEXT:
+13. Return ${targetTotal ? `at most ${targetTotal}` : 'a reasonable number of'} test cases total across all flows.
+
+OBSERVED EXPLORATION CONTEXT (grouped by flow):
 
 ${JSON.stringify(
   compactContext,

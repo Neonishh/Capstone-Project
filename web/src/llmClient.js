@@ -1039,6 +1039,8 @@ function getDefaultValue(
 
 module.exports = {
   callLLM,
+  cleanJSONResponse,
+  parseJSONResponse,
   parseExplorationPlan,
   executeAction
 };
