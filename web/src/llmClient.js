@@ -8,7 +8,9 @@ if (!GROQ_API_KEY) {
 }
 const groq = new Groq({ apiKey: GROQ_API_KEY });
 
-const MODEL       = 'llama-3.3-70b-versatile';
+// Groq decommissioned `llama-3.3-70b-versatile`; default to a current model
+// and keep Architecture A independently configurable via GROQ_MODEL_A.
+const MODEL       = process.env.GROQ_MODEL_A || process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 const MAX_TOKENS  = 400;
 const TEMPERATURE = 0.2;
 

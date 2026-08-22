@@ -1,0 +1,24 @@
+﻿{
+    "name":  "capstone-vision-architecture",
+    "version":  "1.0.0",
+    "description":  "Architecture B: YOLO + OCR visual UI understanding with LLM test generation",
+    "private":  true,
+    "scripts":  {
+                    "start:browser":  "node services/browser-service/browser.js",
+                    "start:yolo":  "python services/yolo-service/detect.py",
+                    "start:ocr":  "python services/ocr-service/ocr.py",
+                    "start:merge":  "node services/merge-service/merge.js",
+                    "start:gateway":  "node gateway/app.js",
+                    "run":  "node runVision.js"
+                },
+    "devDependencies":  {
+
+                        },
+    "dependencies":  {
+                         "axios":  "^1.14.0",
+                         "dotenv":  "^16.6.1",
+                         "express":  "^4.19.2",
+                         "groq-sdk":  "^1.1.2",
+                         "playwright":  "^1.58.1"
+                     }
+}

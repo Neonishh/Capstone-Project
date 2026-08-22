@@ -1,0 +1,9 @@
+﻿{
+  "name": "vision-merge-service",
+  "version": "1.0.0",
+  "main": "merge.js",
+  "scripts": { "start": "node merge.js" },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

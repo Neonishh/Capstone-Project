@@ -1,0 +1,10 @@
+﻿{
+  "name": "vision-browser-service",
+  "version": "1.0.0",
+  "main": "browser.js",
+  "scripts": { "start": "node browser.js" },
+  "dependencies": {
+    "express": "^4.19.2",
+    "playwright": "^1.58.1"
+  }
+}
