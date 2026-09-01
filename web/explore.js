@@ -1,34 +1,4 @@
 'use strict';
-
-/**
- * explore.js
- *
- * Architecture:
- *
- * Homepage
- *    ↓
- * Playwright extracts DOM
- *    ↓
- * LLM selects 2–3 major application features
- *    ↓
- * Playwright enters each selected feature
- *    ↓
- * Playwright deterministically exercises the controls
- *    ↓
- * Memory Log
- *    ↓
- * Context Builder
- *    ↓
- * Test Generator LLM
- *
- * IMPORTANT:
- *
- * The LLM is NOT called for every textbox/button/checkbox.
- *
- * The LLM is used for semantic feature selection.
- * Playwright performs the detailed browser interaction.
- */
-
 require('dotenv').config();
 
 const { chromium } = require('playwright');
@@ -76,10 +46,16 @@ const HOME_URL =
 /**
  * IMPORTANT:
  *
- * Only 2–3 major homepage features are selected.
+ * At least MIN_FLOWS major homepage features are requested from the LLM
+ * (when the site actually has that many distinct functional areas), with
+ * an upper bound of MAX_FLOWS so a very large site doesn't blow past
+ * reasonable rate limits.
  */
+const MIN_FLOWS =
+  Number(process.env.MIN_FLOWS) || 5;
+
 const MAX_FLOWS =
-  Number(process.env.MAX_FLOWS) || 3;
+  Number(process.env.MAX_FLOWS) || 5;
 
 
 /**
@@ -90,6 +66,14 @@ const MAX_FLOWS =
  */
 const MAX_PAGES_PER_FLOW =
   Number(process.env.MAX_PAGES_PER_FLOW) || 3;
+
+
+/**
+ * Maximum number of sub-feature link navigations performed per selected
+ * homepage feature.
+ */
+const MAX_SUB_LINKS_PER_FLOW =
+  Number(process.env.MAX_SUB_LINKS_PER_FLOW) || 2;
 
 
 /**
@@ -313,21 +297,38 @@ function isSameOrigin(target, base) {
  */
 async function discoverFlows(elements) {
 
-  const demoQaFallback =
+  const llmFeatures =
+    await discoverFlowsViaLLM(elements);
+
+  if (llmFeatures.length) {
+    return llmFeatures;
+  }
+
+  console.warn(
+    '[explore] LLM flow discovery returned nothing usable - ' +
+    'using generic structural fallback (not website-specific).'
+  );
+
+  const fallbackFeatures =
     selectTopLevelFeatures(elements, MAX_FLOWS);
 
-  if (demoQaFallback.length) {
-    console.log(
-      '[explore] Using deterministic DemoQA top-level feature selection.'
-    );
+  return fallbackFeatures.map(feature => ({
+    name: feature.name,
+    description: `Top-level feature detected via structural fallback: ${feature.name}`,
+    entryElementId: feature.elementId,
+    entryUrl: resolveUrl(feature.href, HOME_URL)
+  }));
+}
 
-    return demoQaFallback.map(feature => ({
-      name: feature.name,
-      description: `Primary DemoQA feature category: ${feature.name}`,
-      entryElementId: feature.elementId,
-      entryUrl: resolveUrl(feature.href, HOME_URL)
-    }));
-  }
+
+/**
+ * discoverFlowsViaLLM(elements)
+ *
+ * The PRIMARY path for major feature discovery. Always consults the LLM
+ * with the raw, observed homepage elements - nothing here is specific to
+ * any one website's category names.
+ */
+async function discoverFlowsViaLLM(elements) {
 
 
   const compactElements =
@@ -367,10 +368,17 @@ ${JSON.stringify(
   2
 )}
 
-Select at most ${MAX_FLOWS} MAJOR FEATURES.
+Select the MAJOR FEATURES of this application.
 
 IMPORTANT:
 
+- Identify every distinct major functional area/section you can find on
+  this homepage - do not stop early.
+- If the homepage has ${MIN_FLOWS} or more distinct functional areas,
+  select at least ${MIN_FLOWS} of them.
+- If the homepage genuinely has fewer than ${MIN_FLOWS} distinct areas,
+  select all of them (do not invent extra ones to hit a count).
+- Never select more than ${MAX_FLOWS} features total.
 - Select only major top-level application features.
 - Prefer large functional sections represented by cards, major links,
   navigation items, or clearly grouped controls.
@@ -386,7 +394,6 @@ IMPORTANT:
 - Use only observed element IDs and hrefs.
 - Prefer different functional areas rather than multiple links leading
   to essentially the same thing.
-- Return no more than ${MAX_FLOWS} features.
 
 For each selected feature return:
 
@@ -526,6 +533,15 @@ Return ONLY valid JSON.
       )
     );
 
+    if (valid.length < MIN_FLOWS) {
+      console.warn(
+        `[explore] LLM selected only ${valid.length} feature(s), ` +
+        `fewer than MIN_FLOWS (${MIN_FLOWS}). This is expected if the ` +
+        `homepage genuinely has fewer distinct sections; otherwise the ` +
+        `LLM under-selected.`
+      );
+    }
+
     return valid;
 
   } catch (err) {
@@ -582,7 +598,7 @@ function findElement(elements, selector) {
 // PAGE-LEVEL FEATURE FILTERING
 // ============================================================================
 
-async function askLLMForSubFeatures(elements, flowName = '') {
+async function askLLMForSubFeatures(elements, flowName = '', currentUrl = '') {
   if (!Array.isArray(elements) || !elements.length) {
     return [];
   }
@@ -603,9 +619,8 @@ async function askLLMForSubFeatures(elements, flowName = '') {
   }));
 
   const prompt = `
-You are selecting a small, meaningful subset of controls for a single web-page feature.
-Select at most 2 representative sub-features from the observed page DOM.
-Do not traverse unrelated sections or every widget on the page.
+You are selecting which KINDS of controls are meaningful on this single web-page feature.
+Do not enumerate individual elements - just say which kinds of interaction groups exist.
 Keep this website-independent and use only the observed elements.
 
 Current feature: ${flowName || 'current application area'}
@@ -613,20 +628,18 @@ Current feature: ${flowName || 'current application area'}
 DOM:
 ${JSON.stringify(compactElements, null, 2)}
 
-Choose only the meaningful interaction groups that best demonstrate the feature.
-Return ONLY valid JSON in this shape:
-[
-  { "kind": "form", "elementIds": [1, 2, 3] },
-  { "kind": "checkbox", "elementIds": [4, 5] }
-]
-Allowed kinds: "form", "checkbox", "radio", "select", "button".
-Use up to 2 groups total.
+Return ONLY valid JSON, an array of at most 2 kind strings, e.g.:
+["link", "form"]
+Allowed kinds: "link", "form", "checkbox", "radio", "select", "button".
+- Use "link" for pages that are primarily navigation (e.g. a sidebar/menu
+  of links leading to sub-pages, with no form/checkbox/etc on this page
+  itself).
 If no meaningful control group is present, return []
 `.trim();
 
   try {
     const response = await callLLM(prompt, {
-      maxTokens: 500,
+      maxTokens: 200,
       temperature: 0.1
     });
 
@@ -647,16 +660,33 @@ If no meaningful control group is present, return []
       return [];
     }
 
-    const normalized = parsed
-      .filter(item => item && typeof item.kind === 'string')
-      .map(item => ({
-        kind: item.kind.toLowerCase(),
-        elements: Array.isArray(item.elementIds)
-          ? elements.filter(element => item.elementIds.includes(element.elementId))
-          : []
-      }))
-      .filter(item => ['form', 'checkbox', 'radio', 'select', 'button'].includes(item.kind) && item.elements.length)
+    const allowedKinds = ['link', 'form', 'checkbox', 'radio', 'select', 'button'];
+
+    const kinds = parsed
+      .filter(item => typeof item === 'string')
+      .map(item => item.toLowerCase())
+      .filter(kind => allowedKinds.includes(kind))
       .slice(0, 2);
+
+    // --------------------------------------------------------------------
+    // IMPORTANT: completeness guarantee.
+    //
+    // The LLM only decided WHICH KINDS of interaction are meaningful on
+    // this page (a semantic judgment). It does NOT enumerate individual
+    // element ids - that would let the model silently omit fields (e.g.
+    // returning only 2 of a practice form's 8 inputs). Instead, once a
+    // kind is chosen, we deterministically collect EVERY matching
+    // element of that kind on the page via Playwright's own DOM
+    // extraction. This guarantees full field/checkbox/radio coverage
+    // and keeps the LLM call itself small (fewer tokens).
+    // --------------------------------------------------------------------
+
+    const normalized = kinds
+      .map(kind => ({
+        kind,
+        elements: collectAllElementsOfKind(elements, kind, 2, currentUrl)
+      }))
+      .filter(item => item.elements.length);
 
     return normalized;
   } catch (err) {
@@ -672,10 +702,204 @@ function normalizeFeatureName(value) {
   return String(value || '').trim();
 }
 
+
+/**
+ * collectAllElementsOfKind(elements, kind)
+ *
+ * Deterministically gathers every element on the current page matching a
+ * given interaction kind. This is what guarantees that, e.g., ALL fields
+ * of a practice form get filled rather than only whichever ones an LLM
+ * happened to enumerate. Purely structural - no website-specific logic.
+ */
+function collectAllElementsOfKind(elements, kind, maxForHeterogeneousKinds = 2, currentUrl = '') {
+
+  const NON_TEXT_INPUT_TYPES = new Set([
+    'hidden', 'submit', 'button', 'checkbox', 'radio',
+    'file', 'image', 'reset', 'color', 'range'
+  ]);
+
+  if (kind === 'form') {
+    return elements.filter(element => {
+      const tag = (element.tag || '').toUpperCase();
+      const type = (element.inputType || '').toLowerCase();
+
+      if (tag === 'TEXTAREA') {
+        return true;
+      }
+
+      if (tag !== 'INPUT') {
+        return false;
+      }
+
+      return !NON_TEXT_INPUT_TYPES.has(type);
+    });
+  }
+
+  if (kind === 'checkbox') {
+    return elements.filter(
+      element => (element.inputType || '').toLowerCase() === 'checkbox'
+    );
+  }
+
+  if (kind === 'radio') {
+    return elements.filter(
+      element => (element.inputType || '').toLowerCase() === 'radio'
+    );
+  }
+
+  if (kind === 'select') {
+    return elements.filter(
+      element => (element.tag || '').toUpperCase() === 'SELECT'
+    );
+  }
+
+  // --------------------------------------------------------------------
+  // 'link' and 'button' are intentionally NOT exhaustive.
+  //
+  // A sidebar can have 8+ links (e.g. demoqa's Elements page: Text Box,
+  // Check Box, Radio Button, Web Tables, Buttons, Links, ...). Clicking
+  // the first one navigates away immediately, so a selector for the
+  // 2nd/3rd/... link (captured from the OLD page) would no longer exist
+  // on the new page and would simply fail. Capping here also keeps
+  // exploration within "max N features per item" instead of trying to
+  // visit every sidebar entry in one page visit.
+  // --------------------------------------------------------------------
+
+  if (kind === 'link') {
+    const basePath = (() => {
+      try {
+        return new URL(currentUrl).pathname || '/';
+      } catch (_) {
+        return '/';
+      }
+    })();
+
+    const normalizeHref = (href) => {
+      const resolved = resolveUrl(href, currentUrl || HOME_URL);
+      if (!resolved || !isSameOrigin(resolved, HOME_URL)) {
+        return '';
+      }
+
+      try {
+        const parsed = new URL(resolved);
+
+        if (!parsed.pathname || parsed.pathname === '/') {
+          return '';
+        }
+
+        if (parsed.pathname === basePath) {
+          return '';
+        }
+
+        return parsed.href;
+      } catch (_) {
+        return '';
+      }
+    };
+
+    const scoreUrl = (url, text) => {
+      let score = 0;
+
+      try {
+        const current = new URL(currentUrl || HOME_URL);
+        const next = new URL(url);
+
+        const currentRoot = current.pathname.split('/').filter(Boolean)[0] || '';
+        const nextRoot = next.pathname.split('/').filter(Boolean)[0] || '';
+
+        if (currentRoot && currentRoot === nextRoot) {
+          score += 3;
+        }
+
+        if (next.pathname.split('/').filter(Boolean).length > current.pathname.split('/').filter(Boolean).length) {
+          score += 2;
+        }
+      } catch (_) {
+        // Keep default score.
+      }
+
+      const lowerText = String(text || '').toLowerCase();
+      if (lowerText.includes('home')) {
+        score -= 10;
+      }
+
+      return score;
+    };
+
+    const seen = new Set();
+
+    return elements
+      .filter(element => {
+        const tag = (element.tag || '').toUpperCase();
+        const href = element.href || '';
+        if (tag !== 'A' || !href || href.trim() === '#') {
+          return false;
+        }
+
+        const resolved = normalizeHref(href);
+        if (!resolved || seen.has(resolved)) {
+          return false;
+        }
+
+        seen.add(resolved);
+        return true;
+      })
+      .map(element => ({
+        ...element,
+        _resolvedHref: normalizeHref(element.href || ''),
+        _score: scoreUrl(normalizeHref(element.href || ''), element.text || element.label || element.ariaLabel || '')
+      }))
+      .filter(element => element._resolvedHref)
+      .sort((a, b) => b._score - a._score)
+      .map(({ _resolvedHref, _score, ...element }) => element)
+      .slice(0, maxForHeterogeneousKinds);
+  }
+
+  if (kind === 'button') {
+    return elements
+      .filter(element => {
+        const tag = (element.tag || '').toUpperCase();
+        const role = (element.role || '').toLowerCase();
+        const type = (element.inputType || '').toLowerCase();
+
+        return (
+          tag === 'BUTTON' ||
+          role === 'button' ||
+          (tag === 'INPUT' && ['submit', 'button'].includes(type))
+        );
+      })
+      .slice(0, maxForHeterogeneousKinds);
+  }
+
+  return [];
+}
+
 function selectTopLevelFeatures(elements, maxFeatures = 5) {
   if (!Array.isArray(elements) || !elements.length) {
     return [];
   }
+
+  // Generic, website-independent boilerplate terms to exclude. These are
+  // common site-chrome wording (footer/legal/account links) found across
+  // many unrelated websites - NOT the name of any specific site's feature.
+  const boilerplateTerms = [
+    'privacy',
+    'terms',
+    'cookie',
+    'sign in',
+    'log in',
+    'login',
+    'sign up',
+    'register',
+    'contact us',
+    'about us',
+    'faq',
+    'help',
+    'sitemap',
+    'careers'
+  ];
+
+  const seenHrefs = new Set();
 
   const topLevel = elements
     .filter(element => {
@@ -692,28 +916,20 @@ function selectTopLevelFeatures(elements, maxFeatures = 5) {
       }
 
       const lowerText = text.toLowerCase();
-      const isDemoQaMainCategory = [
-        'elements',
-        'forms',
-        'alerts',
-        'frame',
-        'windows',
-        'widgets',
-        'interactions',
-        'book store',
-        'bookstore'
-      ].some(keyword => lowerText.includes(keyword) || href.includes(keyword));
 
-      if (!isDemoQaMainCategory) {
+      if (boilerplateTerms.some(term => lowerText.includes(term))) {
         return false;
       }
 
-      return !(
-        lowerText.includes('book store') ||
-        lowerText.includes('bookstore') ||
-        href.includes('books') ||
-        href.includes('/books')
-      );
+      const dedupeKey = href || lowerText;
+
+      if (seenHrefs.has(dedupeKey)) {
+        return false;
+      }
+
+      seenHrefs.add(dedupeKey);
+
+      return true;
     })
     .map(element => ({
       name: normalizeFeatureName(element.text || element.label || element.ariaLabel || element.id || ''),
@@ -785,127 +1001,39 @@ function selectPageSubFeatures(elements, maxSubFeatures = 2) {
   return groupings.slice(0, maxSubFeatures);
 }
 
-function selectRelevantSubFeatures(elements, maxSubFeatures = 2) {
+function selectRelevantSubFeatures(elements, maxSubFeatures = 2, currentUrl = '') {
   if (!Array.isArray(elements) || !elements.length) {
     return [];
   }
 
-  const selected = selectPageSubFeatures(elements, maxSubFeatures);
-
-  if (selected.length >= maxSubFeatures) {
-    return selected.map(item => ({
-      kind: item.kind,
-      name: item.name,
-      elements: elements.filter(element => element.elementId === item.elementId)
-    }));
-  }
+  // Try each kind in a reasonable priority order and take the first
+  // maxSubFeatures kinds that actually have matching elements on this
+  // page. Form/checkbox/radio/select are exhaustive within their kind
+  // (guaranteeing full field coverage); link/button are capped inside
+  // collectAllElementsOfKind since they're heterogeneous navigation/
+  // action targets. 'link' is tried last so real functional widgets are
+  // preferred over plain navigation when a page has both.
+  const kindPriority = ['form', 'checkbox', 'radio', 'select', 'button', 'link'];
 
   const fallback = [];
 
-  const textInputs = elements.filter(element => {
-    const tag = (element.tag || '').toUpperCase();
-    const type = (element.inputType || '').toLowerCase();
-    const labelText = [
-      element.label,
-      element.placeholder,
-      element.name,
-      element.ariaLabel,
-      element.id,
-      element.text
-    ].filter(Boolean).join(' ').toLowerCase();
+  for (const kind of kindPriority) {
 
-    if (tag === 'TEXTAREA') {
-      return true;
+    if (fallback.length >= maxSubFeatures) {
+      break;
     }
 
-    if (tag !== 'INPUT') {
-      return false;
-    }
+    const matches = collectAllElementsOfKind(elements, kind, 2, currentUrl);
 
-    if (['hidden', 'submit', 'button', 'checkbox', 'radio', 'file', 'image', 'reset', 'color', 'range'].includes(type)) {
-      return false;
-    }
-
-    return labelText.includes('name') ||
-      labelText.includes('email') ||
-      labelText.includes('phone') ||
-      labelText.includes('address') ||
-      labelText.includes('search') ||
-      labelText.includes('subject') ||
-      labelText.includes('message') ||
-      labelText.includes('city') ||
-      labelText.includes('country') ||
-      labelText.includes('date') ||
-      labelText.includes('code') ||
-      labelText.includes('text');
-  });
-
-  if (textInputs.length) {
-    fallback.push({
-      kind: 'form',
-      elements: textInputs.slice(0, 3)
-    });
-  }
-
-  const checkboxInputs = elements.filter(element => (element.inputType || '').toLowerCase() === 'checkbox');
-  if (checkboxInputs.length && fallback.length < maxSubFeatures) {
-    fallback.push({
-      kind: 'checkbox',
-      elements: checkboxInputs.slice(0, 2)
-    });
-  }
-
-  if (!checkboxInputs.length && fallback.length < maxSubFeatures) {
-    const radioInputs = elements.filter(element => (element.inputType || '').toLowerCase() === 'radio');
-    if (radioInputs.length) {
+    if (matches.length) {
       fallback.push({
-        kind: 'radio',
-        elements: radioInputs.slice(0, 2)
+        kind,
+        elements: matches
       });
     }
   }
 
-  if (fallback.length < maxSubFeatures) {
-    const selects = elements.filter(element => (element.tag || '').toUpperCase() === 'SELECT');
-    if (selects.length) {
-      fallback.push({
-        kind: 'select',
-        elements: selects.slice(0, 1)
-      });
-    }
-  }
-
-  if (fallback.length < maxSubFeatures) {
-    const actionButtons = elements.filter(element => {
-      const tag = (element.tag || '').toUpperCase();
-      const role = (element.role || '').toLowerCase();
-      const text = [
-        element.text,
-        element.label,
-        element.ariaLabel,
-        element.id
-      ].filter(Boolean).join(' ').toLowerCase();
-
-      const isButton = tag === 'BUTTON' || role === 'button' || (
-        tag === 'INPUT' && ['submit', 'button'].includes((element.inputType || '').toLowerCase())
-      );
-
-      if (!isButton) {
-        return false;
-      }
-
-      return text.includes('submit') || text.includes('save') || text.includes('search') || text.includes('login') || text.includes('register') || text.includes('continue') || text.includes('next');
-    });
-
-    if (actionButtons.length) {
-      fallback.push({
-        kind: 'button',
-        elements: actionButtons.slice(0, 1)
-      });
-    }
-  }
-
-  return fallback.slice(0, maxSubFeatures);
+  return fallback;
 }
 
 function shouldCaptureScreenshot(action, step, captureEveryStep = false) {
@@ -1024,6 +1152,64 @@ function getSafeValue(element) {
 // ============================================================================
 // LOG ACTION
 // ============================================================================
+
+// ============================================================================
+// MEMORY LOG ELEMENT DETAILS
+// ============================================================================
+
+/**
+ * buildTargetElementDetails(element)
+ *
+ * Trims a full extracted element down to the memory log's
+ * target_element_details schema.
+ *
+ * Base fields match the schema exactly: elementId, tag, text, id, class,
+ * selector.
+ *
+ * Three fields are added on top: inputType, required, placeholder. These
+ * are necessary for evidence-based negative test generation downstream
+ * (e.g. "this field is required" is the ONLY legitimate evidence for a
+ * negative test case - without it, testGenerator can either never
+ * produce a negative test, or have to invent one, which violates the
+ * "don't invent evidence" rule).
+ */
+function buildTargetElementDetails(element) {
+
+  if (!element) {
+    return null;
+  }
+
+  return {
+
+    elementId:
+      element.elementId ?? null,
+
+    tag:
+      element.tag || '',
+
+    text:
+      element.text || '',
+
+    id:
+      element.id || null,
+
+    class:
+      element.className || '',
+
+    selector:
+      element.selector || '',
+
+    inputType:
+      element.inputType || '',
+
+    required:
+      element.required === true,
+
+    placeholder:
+      element.placeholder || ''
+  };
+}
+
 
 async function performAndLog(
   page,
@@ -1198,9 +1384,6 @@ async function performAndLog(
       flow_name:
         flow.name,
 
-      planning_cycle:
-        state.flowActionCount,
-
       from_url:
         before.url,
 
@@ -1216,7 +1399,7 @@ async function performAndLog(
         element.selector,
 
       target_element_details:
-        element,
+        buildTargetElementDetails(element),
 
       value:
         action === 'fill'
@@ -1232,9 +1415,6 @@ async function performAndLog(
       success,
 
       error,
-
-      reason:
-        'Deterministic Playwright interaction.',
 
       screenshot_before:
         screenshotBefore,
@@ -1297,16 +1477,20 @@ async function exploreCurrentPage(
   let groups =
     await askLLMForSubFeatures(
       elements,
-      flow.name
+      flow.name,
+      page.url()
     );
 
   if (!groups.length) {
     groups =
       selectRelevantSubFeatures(
         elements,
-        2
+        2,
+        page.url()
       );
   }
+
+  let navigatedToNewPage = false;
 
 
   for (const group of groups) {
@@ -1324,6 +1508,10 @@ async function exploreCurrentPage(
         : [];
 
     if (group.kind === 'link') {
+      if (state.flowLinkClicks >= MAX_SUB_LINKS_PER_FLOW) {
+        continue;
+      }
+
       const linkElements =
         groupElements.length
           ? groupElements
@@ -1337,7 +1525,11 @@ async function exploreCurrentPage(
           break;
         }
 
-        await performAndLog(
+        if (state.flowLinkClicks >= MAX_SUB_LINKS_PER_FLOW) {
+          break;
+        }
+
+        const result = await performAndLog(
           page,
           flow,
           state,
@@ -1345,6 +1537,19 @@ async function exploreCurrentPage(
           element,
           'link'
         );
+
+        if (result.success) {
+          state.flowLinkClicks++;
+        }
+
+        if (result.success && result.after.url && result.after.url !== result.before.url) {
+          navigatedToNewPage = true;
+          break;
+        }
+      }
+
+      if (navigatedToNewPage) {
+        break;
       }
     }
 
@@ -1532,6 +1737,8 @@ async function exploreFlow(
 
   const visitedPages =
     new Set();
+
+  state.flowLinkClicks = 0;
 
 
   for (

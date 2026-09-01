@@ -1,35 +1,5 @@
 'use strict';
 
-/**
- * memoryLog.js
- *
- * Responsibility:
- *
- *   Store raw evidence produced during autonomous browser exploration.
- *
- * This file intentionally does NOT:
- *   - summarize flows
- *   - interpret website functionality
- *   - generate test cases
- *   - call the LLM
- *
- * Those responsibilities belong to later stages of the pipeline.
- *
- * Pipeline:
- *
- *   Playwright
- *       |
- *       v
- *   memoryLog.js
- *       |
- *       v
- *   contextBuilder.js
- *       |
- *       v
- *   testGenerator.js
- */
-
-
 const fs = require('fs');
 const path = require('path');
 
@@ -42,6 +12,39 @@ const path = require('path');
  * storeStep(logArray, stepData)
  *
  * Adds one raw exploration event to the in-memory log.
+ *
+ * Schema (per entry):
+ * {
+ *   step: number,
+ *   flow_name: string,        // which flow/feature this step belongs to -
+ *                              // needed to group entries per feature
+ *   from_url: string,
+ *   from_title: string,
+ *   action: 'click' | 'fill' | 'navigate',
+ *   target: string,
+ *   target_element_details: {
+ *     elementId: number,
+ *     tag: string,
+ *     text: string,
+ *     id: string | null,
+ *     class: string,
+ *     selector: string,
+ *     inputType: string,      // needed for evidence-based negative tests
+ *     required: boolean,      // (e.g. "this field is required" is the
+ *     placeholder: string     // only legitimate basis for a negative
+ *                              // test case - without it, testGenerator
+ *                              // has no evidence and would either never
+ *                              // produce one or have to invent it)
+ *   },
+ *   value: string,            // what was actually typed, for 'fill'
+ *   to_url: string,
+ *   to_title: string,
+ *   success: boolean,         // needed as evidence for negative tests
+ *   error: string,
+ *   screenshot_before: string,
+ *   screenshot_after: string,
+ *   timestamp: string
+ * }
  *
  * The function normalizes the structure so that every log entry follows
  * the same schema.
@@ -95,13 +98,6 @@ function storeStep(logArray, stepData = {}) {
         : '',
 
 
-    // Planning cycle that produced the action.
-    planning_cycle:
-      Number.isInteger(stepData.planning_cycle)
-        ? stepData.planning_cycle
-        : null,
-
-
     // Browser state before the action.
     from_url:
       typeof stepData.from_url === 'string'
@@ -114,7 +110,7 @@ function storeStep(logArray, stepData = {}) {
         : '',
 
 
-    // Action selected by the LLM.
+    // Action performed.
     action,
 
 
@@ -125,7 +121,7 @@ function storeStep(logArray, stepData = {}) {
         : '',
 
 
-    // Full DOM information for the selected element.
+    // Trimmed DOM information for the acted-on element.
     target_element_details:
       targetElement,
 
@@ -149,7 +145,8 @@ function storeStep(logArray, stepData = {}) {
         : '',
 
 
-    // Whether Playwright successfully executed the action.
+    // Whether Playwright successfully executed the action. This is the
+    // primary evidence source for negative test generation.
     success:
       stepData.success !== false,
 
@@ -161,17 +158,7 @@ function storeStep(logArray, stepData = {}) {
         : '',
 
 
-    // LLM's explanation for choosing this action.
-    reason:
-      typeof stepData.reason === 'string'
-        ? stepData.reason
-        : '',
-
-
-    // Screenshots are currently disabled for the DOM experiment.
-    //
-    // These fields are retained because the same memory schema can later
-    // support the vision-based YOLO + OCR experiment.
+    // Screenshots (relative paths).
     screenshot_before:
       typeof stepData.screenshot_before === 'string'
         ? stepData.screenshot_before
@@ -204,11 +191,16 @@ function storeStep(logArray, stepData = {}) {
 /**
  * normalizeElement(element)
  *
- * Keeps the useful DOM information associated with the action.
+ * Keeps only the DOM information needed downstream:
+ *   elementId, tag, text, id, class, selector
+ * plus inputType/required/placeholder (see schema note above).
  *
- * The entire DOM inventory is NOT stored here.
- *
- * We only store the element that the LLM actually selected.
+ * Everything else that used to be stored here (role, label, href,
+ * ariaLabel/ariaExpanded/ariaChecked/ariaSelected, name, disabled,
+ * contentEditable, checked, selected, inputValue, boundingBox) is
+ * dropped: none of it is read by contextBuilder.js or testGenerator.js,
+ * so keeping it only inflated the memory log and, downstream, the
+ * test-generation prompt.
  */
 function normalizeElement(element) {
 
@@ -227,167 +219,43 @@ function normalizeElement(element) {
         ? element.elementId
         : null,
 
-
     tag:
       typeof element.tag === 'string'
         ? element.tag
         : '',
-
-
-    role:
-      typeof element.role === 'string'
-        ? element.role
-        : '',
-
 
     text:
       typeof element.text === 'string'
         ? element.text
         : '',
 
-
-    label:
-      typeof element.label === 'string'
-        ? element.label
-        : '',
-
-
     id:
       typeof element.id === 'string'
         ? element.id
         : null,
 
-
-    className:
-      typeof element.className === 'string'
-        ? element.className
-        : '',
-
+    class:
+      typeof element.class === 'string'
+        ? element.class
+        : (typeof element.className === 'string' ? element.className : ''),
 
     selector:
       typeof element.selector === 'string'
         ? element.selector
         : '',
 
-
-    href:
-      typeof element.href === 'string'
-        ? element.href
-        : '',
-
-
     inputType:
       typeof element.inputType === 'string'
         ? element.inputType
         : '',
 
+    required:
+      element.required === true,
 
     placeholder:
       typeof element.placeholder === 'string'
         ? element.placeholder
-        : '',
-
-
-    ariaLabel:
-      typeof element.ariaLabel === 'string'
-        ? element.ariaLabel
-        : '',
-
-
-    ariaExpanded:
-      element.ariaExpanded ?? null,
-
-
-    ariaChecked:
-      element.ariaChecked ?? null,
-
-
-    ariaSelected:
-      element.ariaSelected ?? null,
-
-
-    name:
-      typeof element.name === 'string'
-        ? element.name
-        : null,
-
-
-    disabled:
-      element.disabled === true,
-
-
-    required:
-      element.required === true,
-
-
-    contentEditable:
-      element.contentEditable === true,
-
-
-    checked:
-      typeof element.checked === 'boolean'
-        ? element.checked
-        : null,
-
-
-    selected:
-      typeof element.selected === 'boolean'
-        ? element.selected
-        : null,
-
-
-    // We don't need to persist the current input value from the DOM
-    // because the action's actual value is stored separately.
-    inputValue:
-      typeof element.value === 'string'
-        ? element.value
-        : '',
-
-
-    // Useful later for comparing DOM and vision-based detection.
-    boundingBox:
-      normalizeBoundingBox(
-        element.boundingBox
-      )
-  };
-}
-
-
-// ============================================================================
-// NORMALIZE BOUNDING BOX
-// ============================================================================
-
-function normalizeBoundingBox(box) {
-
-  if (
-    !box ||
-    typeof box !== 'object'
-  ) {
-    return null;
-  }
-
-
-  return {
-
-    x:
-      Number.isFinite(box.x)
-        ? box.x
-        : 0,
-
-    y:
-      Number.isFinite(box.y)
-        ? box.y
-        : 0,
-
-    width:
-      Number.isFinite(box.width)
-        ? box.width
-        : 0,
-
-    height:
-      Number.isFinite(box.height)
-        ? box.height
-        : 0
+        : ''
   };
 }
 
@@ -448,7 +316,7 @@ function saveLog(logArray, filePath) {
 
 
   console.log(
-    `[memoryLog] Saved ${logArray.length} step(s) → ${filePath}`
+    `[memoryLog] Saved ${logArray.length} step(s) → ${path.basename(filePath)}`
   );
 }
 

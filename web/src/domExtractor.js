@@ -1,22 +1,5 @@
 'use strict';
 
-/**
- * domExtractor.js
- *
- * Responsibility:
- *   Extract useful interactive elements and page metadata from a
- *   Playwright page.
- *
- * Important design principle:
- *
- *   Playwright extracts the raw UI information.
- *   The LLM interprets that information and decides what to do.
- *
- * This file should NOT contain website-specific knowledge.
- */
-
-// Maximum number of elements returned to the LLM.
-// The preprocessor can apply another limit if necessary.
 const MAX_RAW_ELEMENTS = 150;
 
 
@@ -158,8 +141,7 @@ async function getDOMElements(page) {
 
         if (
           style.display === 'none' ||
-          style.visibility === 'hidden' ||
-          style.opacity === '0'
+          style.visibility === 'hidden'
         ) {
           return false;
         }
@@ -167,10 +149,38 @@ async function getDOMElements(page) {
         const rect =
           element.getBoundingClientRect();
 
-        return (
+        if (
           rect.width > 0 &&
           rect.height > 0
-        );
+        ) {
+          return true;
+        }
+
+        // ----------------------------------------------------------------
+        // Some sites visually hide native checkbox/radio inputs with
+        // opacity:0 (or a zero/near-zero bounding box) while rendering a
+        // custom-styled sibling icon in their place. The input is still
+        // present, enabled, and fully interactable via Playwright - it is
+        // just not painted with its own visible box. Rejecting these
+        // outright causes checkbox-tree style widgets to yield zero
+        // interactive elements. This is a generic, common CSS pattern,
+        // not specific to any one website.
+        // ----------------------------------------------------------------
+
+        const tag =
+          element.tagName.toUpperCase();
+
+        const type =
+          (element.getAttribute('type') || '').toLowerCase();
+
+        if (
+          tag === 'INPUT' &&
+          (type === 'checkbox' || type === 'radio')
+        ) {
+          return true;
+        }
+
+        return false;
       }
 
 

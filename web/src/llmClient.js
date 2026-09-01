@@ -1,36 +1,4 @@
 'use strict';
-
-/**
- * llmClient.js
- *
- * Responsibility:
- *
- * 1. Communicate with the LLM.
- * 2. Parse LLM responses.
- * 3. Normalize exploration plans.
- * 4. Execute LLM-selected actions through Playwright.
- *
- * Architecture:
- *
- *       DOM / Context
- *            |
- *            v
- *           LLM
- *            |
- *            v
- *      Structured JSON
- *            |
- *            v
- *       Playwright
- *
- * IMPORTANT:
- *
- * The LLM decides WHAT should happen.
- * Playwright decides HOW to physically execute it.
- *
- * This file contains no website-specific logic.
- */
-
 require('dotenv').config();
 
 const Groq = require('groq-sdk');
@@ -55,23 +23,13 @@ const groq =
     apiKey: GROQ_API_KEY
   });
 
-
-/**
- * Keep the model configurable through .env.
- *
- * Example:
- *
- * GROQ_MODEL=llama-3.3-70b-versatile
- *
- * This allows you to change models without modifying code.
- */
 const MODEL =
   process.env.GROQ_MODEL ||
   'openai/gpt-oss-120b';
 
 
 /**
- * Lower token limit keeps exploration inexpensive.
+ * Lower token limit -exploration inexpensive.
  *
  * The exploration prompt requests a short JSON action plan,
  * so there is no reason to allocate a huge response.

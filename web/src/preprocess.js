@@ -1,30 +1,5 @@
 'use strict';
 
-/**
- * preprocess.js
- *
- * Responsibilities:
- *
- * 1. preprocessDOM()
- *    Reduce raw Playwright DOM information into useful elements for the LLM.
- *
- * 2. buildFlowDiscoveryPrompt()
- *    Ask the LLM to identify meaningful top-level user flows from the
- *    currently observed page.
- *
- * 3. buildExplorationPrompt()
- *    Ask the LLM to decide what meaningful interactions should be performed
- *    next during autonomous exploration.
- *
- * Important:
- *
- * This file contains NO website-specific knowledge.
- *
- * The LLM must infer functionality from the information extracted by
- * Playwright.
- */
-
-
 // ============================================================================
 // CONFIGURATION
 // ============================================================================

@@ -453,7 +453,9 @@ function addPage(
  * buildElementContext(element)
  *
  * Converts the selected DOM element into a compact representation useful
- * for test generation.
+ * for test generation. Matches the memory log's trimmed
+ * target_element_details schema: elementId, tag, text, id, class,
+ * selector, inputType, required, placeholder.
  */
 function buildElementContext(element) {
 
@@ -465,26 +467,17 @@ function buildElementContext(element) {
     tag:
       element.tag || '',
 
-    role:
-      element.role || '',
-
     text:
       element.text || '',
-
-    label:
-      element.label || '',
 
     id:
       element.id || null,
 
-    name:
-      element.name || null,
+    class:
+      element.class || '',
 
     selector:
       element.selector || '',
-
-    href:
-      element.href || '',
 
     inputType:
       element.inputType || '',
@@ -492,17 +485,8 @@ function buildElementContext(element) {
     placeholder:
       element.placeholder || '',
 
-    ariaLabel:
-      element.ariaLabel || '',
-
     required:
-      element.required === true,
-
-    disabled:
-      element.disabled === true,
-
-    contentEditable:
-      element.contentEditable === true
+      element.required === true
   };
 }
 
@@ -536,11 +520,8 @@ function buildActionContext(step) {
     elementText:
       element.text || '',
 
-    elementLabel:
-      element.label || '',
-
-    role:
-      element.role || '',
+    elementTag:
+      element.tag || '',
 
     value:
       step.value || '',
@@ -552,10 +533,7 @@ function buildActionContext(step) {
       step.to_url || '',
 
     success:
-      step.success !== false,
-
-    reason:
-      step.reason || ''
+      step.success !== false
   };
 }
 
@@ -652,23 +630,17 @@ function buildStepContext(step) {
       tag:
         element.tag || '',
 
-      role:
-        element.role || '',
-
       text:
         element.text || '',
 
-      label:
-        element.label || '',
+      class:
+        element.class || '',
 
       selector:
         element.selector || '',
 
       id:
-        element.id || '',
-
-      name:
-        element.name || ''
+        element.id || ''
     },
 
     from: {
@@ -718,11 +690,9 @@ function createElementKey(element) {
 
   return [
     element.tag || '',
-    element.role || '',
     element.text || '',
-    element.label || '',
-    element.name || '',
-    element.href || ''
+    element.class || '',
+    element.selector || ''
   ]
     .join('|')
     .toLowerCase();
