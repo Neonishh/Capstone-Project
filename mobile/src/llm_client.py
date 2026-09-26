@@ -70,6 +70,8 @@ def call_llm(prompt: str, response_format: str = "action"):
         raw_text = _call_openai_raw(prompt)
     elif LLM_PROVIDER == "gemini":
         raw_text = _call_gemini_raw(prompt)
+    elif LLM_PROVIDER == "groq":
+        raw_text = _call_groq_raw(prompt)
     elif LLM_PROVIDER == "ollama":
         raw_text = _call_ollama_raw(prompt)
     else:
@@ -217,25 +219,39 @@ def _call_openai_raw(prompt: str) -> str:
 
     return response.choices[0].message.content
 
-
-def _call_gemini_raw(prompt: str) -> str:
-    """Calls Gemini generateContent API and returns the raw text content.
-
-    Uses the current unified `google-genai` SDK (the old `google-generativeai`
-    package and `gemini-2.0-flash` model are both retired): pip install google-genai
-
-    Retries a few times on transient 503 UNAVAILABLE ("high demand") errors
-    before giving up, since those are Google-side blips, not real failures -
-    without this, a single overload spike burns an entire exploration step.
-    """
+def _call_groq_raw(prompt: str) -> str:
+    """Calls Groq API and returns the raw text content."""
     try:
-        from google import genai
+        from groq import Groq
     except ImportError:
         raise RuntimeError(
-            "[llm_client] google-genai package not installed. "
-            "Run: pip install google-genai\n"
-            "(Note: the old `google-generativeai` package is retired — "
-            "uninstall it with `pip uninstall google-generativeai` if present.)"
+            "[llm_client] groq package not installed. Run: pip install groq"
+        )
+
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise RuntimeError(
+            "[llm_client] GROQ_API_KEY environment variable not set."
+        )
+
+    model = os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+    client = Groq(api_key=api_key)
+
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+    )
+    return response.choices[0].message.content
+
+def _call_gemini_raw(prompt: str) -> str:
+    """Calls Gemini API and returns the raw text content."""
+    try:
+        import google.generativeai as genai
+    except ImportError:
+        raise RuntimeError(
+            "[llm_client] google-generativeai not installed. "
+            "Run: pip install google-generativeai"
         )
 
     api_key = os.environ.get("GEMINI_API_KEY")
@@ -244,31 +260,24 @@ def _call_gemini_raw(prompt: str) -> str:
             "[llm_client] GEMINI_API_KEY environment variable not set."
         )
 
-    # "gemini-flash-latest" is a Google-maintained alias that always points
-    # at the current live flash model, so this survives future retirements
-    # without needing a code change. Override with GEMINI_MODEL if you want
-    # to pin a specific version instead.
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
-    client = genai.Client(api_key=api_key)
+    model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel(model_name)
 
     max_retries = 3
     backoff_seconds = 5
 
     for attempt in range(1, max_retries + 1):
         try:
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt,
-                config={"temperature": 0.2},
+            response = model.generate_content(
+                prompt,
+                generation_config={"temperature": 0.2},
             )
             return response.text
         except Exception as e:
             is_transient = "503" in str(e) or "UNAVAILABLE" in str(e)
             if is_transient and attempt < max_retries:
-                print(
-                    f"[llm_client] Gemini overloaded (attempt {attempt}/{max_retries}), "
-                    f"retrying in {backoff_seconds}s..."
-                )
+                print(f"[llm_client] Gemini overloaded (attempt {attempt}/{max_retries}), retrying in {backoff_seconds}s...")
                 time.sleep(backoff_seconds)
                 backoff_seconds *= 2
                 continue

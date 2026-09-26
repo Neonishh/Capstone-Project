@@ -235,7 +235,13 @@ def build_test_case_prompt(memory_log: list) -> str:
 EXPLORATION LOG:
 {json.dumps(trimmed_log, indent=2)}
 
-Generate 3 to 5 functional test cases that cover the key user flows discovered above (e.g. login, navigation, form submission).
+IMPORTANT CONTEXT:
+- Every test case runs from a FRESH app launch on the starting screen
+- You MUST include all navigation steps needed to reach the target element
+- Only use resource-ids that appear in the exploration log above
+- The app starts at the first screen seen in the log
+
+Generate 3 to 5 functional test cases that cover the key user flows discovered above.
 
 Each test case must follow this EXACT JSON schema:
 {{
@@ -244,14 +250,20 @@ Each test case must follow this EXACT JSON schema:
   "steps": [
     {{
       "stepNum": 1,
-      "action": "tap" | "type" | "swipe",
-      "resource_id": "<resource-id>",
-      "value": "<text, only for type>",
+      "action": "tap" | "enterText" | "swipe" | "back",
+      "target": "<resource-id of the element, copied exactly from the exploration log>",
+      "value": "<text to type, only for enterText action>",
       "description": "Human-readable step description"
     }}
   ],
   "expected_result": "What the user should see after all steps complete"
 }}
+
+STRICT RULES:
+- "action" must be ONLY one of: tap, enterText, swipe, back — NEVER use "verify" or any other word
+- "target" must be copied exactly from the resource-ids in the exploration log
+- Include navigation steps (e.g. tap a menu item first) before tapping a deep element
+- "value" is only needed for enterText actions, leave it out otherwise
 
 Return ONLY a valid JSON array of test case objects. No markdown, no extra text.
 Example: [ {{ "id": "TC001", ... }}, {{ "id": "TC002", ... }} ]"""
