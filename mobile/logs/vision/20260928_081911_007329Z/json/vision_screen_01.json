@@ -1,0 +1,119 @@
+{
+  "step": 1,
+  "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_01_20260928_081922.png",
+  "screen": "Calls & SMS",
+  "elements": [
+    {
+      "type": "accessibility",
+      "text": "Calls & SMS",
+      "bbox": [
+        0,
+        0,
+        1080,
+        598
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "com.android.settings:id/collapsing_toolbar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Navigate up",
+      "bbox": [
+        0,
+        128,
+        147,
+        275
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        598,
+        1080,
+        804
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Calls",
+      "bbox": [
+        189,
+        640,
+        306,
+        711
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "T-Mobile",
+      "bbox": [
+        189,
+        711,
+        329,
+        762
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        804,
+        1080,
+        1010
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "SMS",
+      "bbox": [
+        189,
+        846,
+        297,
+        917
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "T-Mobile",
+      "bbox": [
+        189,
+        917,
+        329,
+        968
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    }
+  ]
+}

@@ -33,6 +33,14 @@ import os
 from pathlib import Path
 
 
+def _safe_text(value: str) -> str:
+    """Keep password-like values out of persisted vision artifacts."""
+    text = (value or "").strip()
+    if text and set(text) <= {"•", "*"}:
+        return "[REDACTED]"
+    return text
+
+
 def _bbox_overlap(a: list, b: list) -> bool:
     """
     Returns True if bbox b overlaps or is contained within bbox a.
@@ -54,6 +62,7 @@ def merge(
     yolo_detections: list,
     ocr_results: list,
     output_dir: str,
+    accessibility_results: list = None,
 ) -> dict:
     """
     Merges YOLO detections and OCR results into a single screen description.
@@ -72,6 +81,7 @@ def merge(
 
     elements = []
     matched_ocr_indices = set()
+    accessibility_results = accessibility_results or []
 
     # For each YOLO detection, find overlapping OCR text
     for det in yolo_detections:
@@ -83,7 +93,7 @@ def merge(
 
         elements.append({
             "type":       det["class"],
-            "text":       " ".join(matched_texts),
+            "text":       _safe_text(" ".join(matched_texts)),
             "bbox":       det["bbox"],
             "confidence": det["confidence"],
         })
@@ -93,25 +103,70 @@ def merge(
         if i not in matched_ocr_indices:
             elements.append({
                 "type": "text",
-                "text": ocr["text"],
+                    "text": _safe_text(ocr["text"]),
                 "bbox": ocr["bbox"],
                 "confidence": None,
             })
 
+    # Accessibility bounds are the authoritative fallback when OCR is
+        # unavailable. Add only entries not already represented by OCR/YOLO.
+    existing = {
+        (element.get("text", "").casefold(), tuple(element.get("bbox", []))): element
+        for element in elements
+    }
+    for accessibility in accessibility_results:
+        key = (
+            (accessibility.get("text") or "").casefold(),
+            tuple(accessibility.get("bbox") or []),
+        )
+        if key in existing:
+            existing_element = existing[key]
+            existing_element.update({
+                "clickable": accessibility.get("clickable", False),
+                "checkable": accessibility.get("checkable", False),
+                "checked": accessibility.get("checked", False),
+                "editable": accessibility.get("editable", False),
+                "resource_id": accessibility.get("resource_id", ""),
+            })
+            continue
+        elements.append({
+            "type": accessibility.get("type", "accessibility"),
+            "text": _safe_text(accessibility.get("text", "")),
+            "bbox": accessibility.get("bbox"),
+            "confidence": accessibility.get("confidence", 1.0),
+            "clickable": accessibility.get("clickable", False),
+            "checkable": accessibility.get("checkable", False),
+            "checked": accessibility.get("checked", False),
+            "editable": accessibility.get("editable", False),
+            "resource_id": accessibility.get("resource_id", ""),
+        })
+        existing[key] = elements[-1]
+
     # Infer screen name from the largest text region
     screen_name = "unknown"
-    if ocr_results:
+    title_candidates = [
+        item for item in accessibility_results
+        if item.get("is_title") and item.get("text")
+    ]
+    name_candidates = title_candidates or ocr_results or accessibility_results
+    if name_candidates:
         largest = max(
-            ocr_results,
+            name_candidates,
             key=lambda o: (o["bbox"][2] - o["bbox"][0]) * (o["bbox"][3] - o["bbox"][1]),
         )
-        screen_name = largest["text"]
+        screen_name = largest.get("text") or largest.get("content_desc") or "unknown"
 
     result = {
         "step":       step,
         "screenshot": screenshot_path,
         "screen":     screen_name,
         "elements":   elements,
+        "detection_counts": {
+            "yolo": len(yolo_detections),
+            "ocr": len(ocr_results),
+            "accessibility": len(accessibility_results),
+            "merged": len(elements),
+        },
     }
 
     output_path = str(Path(output_dir) / f"vision_screen_{step:02d}.json")

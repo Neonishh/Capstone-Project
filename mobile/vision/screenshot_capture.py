@@ -14,7 +14,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 
-def capture_screenshot(driver, output_dir: str, step: int) -> str:
+def capture_screenshot(driver, output_dir: str, step: int, suffix: str = "") -> str:
     """
     Captures the current screen via Appium and saves it as a PNG.
 
@@ -29,7 +29,8 @@ def capture_screenshot(driver, output_dir: str, step: int) -> str:
     Path(output_dir).mkdir(parents=True, exist_ok=True)
 
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    filename = f"screen_{step:02d}_{ts}.png"
+    suffix_part = f"_{suffix}" if suffix else ""
+    filename = f"screen_{step:02d}{suffix_part}_{ts}.png"
     filepath = str(Path(output_dir) / filename)
 
     driver.save_screenshot(filepath)

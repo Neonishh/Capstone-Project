@@ -3,7 +3,7 @@
 Produces a structured JSON describing the current Android screen using
 screenshots, YOLO object detection, and OCR text extraction.
 
-No LLM reasoning. No test generation. Vision pipeline only.
+Uses accessibility, OCR, YOLO, and an LLM-driven controller to explore screens.
 
 ---
 
@@ -41,7 +41,9 @@ pip install opencv-python  # required by both ultralytics and easyocr
 
 ### Module 1 — screenshot_capture.py
 Captures the current Android screen via `driver.save_screenshot()`.
-Saves as `screen_01_YYYYMMDD_HHMMSS.png` in `logs/vision/screenshots/`.
+Saves as `screen_01_YYYYMMDD_HHMMSS.png` in the current run's
+`logs/vision/<run_id>/screenshots/` directory. Each pipeline invocation uses
+a unique UTC timestamp run directory, keeping prior run outputs intact.
 Returns the file path for downstream modules.
 
 ### Module 2 — yolo_detector.py
@@ -51,14 +53,22 @@ Returns a list of `{ class, bbox, confidence }` dicts.
 Replace `yolov8n.pt` with a UI-trained model for better accuracy.
 
 ### Module 3 — ocr_extractor.py
-Runs EasyOCR on the screenshot to extract all visible text.
-Converts EasyOCR's 4-corner polygon bboxes to `[x1, y1, x2, y2]` format.
+Runs EasyOCR on the screenshot to extract visible text. Handles standard
+quadrilateral results and axis-aligned boxes, skipping malformed records.
 Returns a list of `{ text, bbox }` dicts.
+
+Accessibility extraction supplies native labels, bounds, clickability, and
+checked state. Labels inside clickable rows inherit the row's tap bounds.
+The reasoner can tap only controls marked clickable/checkable and can type
+only into controls identified as editable. Memory entries include separate
+YOLO/OCR/accessibility counts and post-action screen/checkable-state changes.
 
 ### Module 4 — vision_merger.py
 Matches each YOLO detection to overlapping OCR text regions using centre-point
 containment. Builds a unified `elements` list combining type, text, bbox, and
-confidence. Saves as `vision_screen_01.json` in `logs/vision/json/`.
+confidence. Saves as `vision_screen_01.json` in the current run's
+`logs/vision/<run_id>/json/` directory. The run's memory log is stored beside
+the `screenshots/` and `json/` directories.
 
 ---
 

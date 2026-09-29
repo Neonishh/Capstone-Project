@@ -38,12 +38,16 @@ from vision.yolo_detector import detect_ui_components
 from vision.ocr_extractor import extract_text
 from vision.vision_merger import merge
 from vision.llm_reasoner import decide_next_action
+from vision.accessibility_extractor import extract_accessibility
 
 MAX_STEPS   = 5
 APPIUM_HOST = os.environ.get("APPIUM_HOST", "localhost")
 APPIUM_PORT = int(os.environ.get("APPIUM_PORT", 4723))
 
-VISION_DIR      = Path(__file__).parent.parent / "logs" / "vision"
+# Each invocation owns a separate output directory so later runs cannot
+# overwrite screenshots, per-screen JSON, or the memory log from earlier runs.
+RUN_ID          = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S_%fZ")
+VISION_DIR      = Path(__file__).parent.parent / "logs" / "vision" / RUN_ID
 SCREENSHOTS_DIR = VISION_DIR / "screenshots"
 JSON_DIR        = VISION_DIR / "json"
 MEMORY_LOG_PATH = str(VISION_DIR / "vision_memory_log.json")
@@ -86,7 +90,7 @@ def _get_screenshot_size(path: str):
         return None, None
 
 
-def execute_action(driver, action: dict) -> None:
+def execute_action(driver, action: dict) -> dict:
     """
     Receives the LLM's action decision and executes it on the device.
 
@@ -97,22 +101,21 @@ def execute_action(driver, action: dict) -> None:
     action_type = action.get("action", "done")
 
     if action_type == "done":
-        return
+        return {"status": "not_needed"}
 
     if action_type == "back":
         driver.back()
         time.sleep(0.5)
-        return
+        return {"status": "executed", "method": "back"}
 
     if action_type == "swipe":
         _do_swipe(driver)
-        return
+        return {"status": "executed", "method": "swipe"}
 
     bbox = action.get("bbox")
     if bbox is None:
-        print("[explore_vision] No bbox resolved — falling back to swipe")
-        _do_swipe(driver)
-        return
+        print("[explore_vision] No valid target bbox; action skipped")
+        return {"status": "skipped", "reason": "no_valid_target_bbox"}
 
     x1, y1, x2, y2 = bbox
     cx = (x1 + x2) // 2
@@ -143,6 +146,41 @@ def execute_action(driver, action: dict) -> None:
         time.sleep(0.3)
         value = action.get("value", "test@example.com")
         driver.execute_script("mobile: type", {"text": value})
+    return {"status": "executed", "method": action_type, "tap": [cx, cy]}
+
+
+def _checkable_states(elements: list) -> dict:
+    """Map checkable controls to their current state for action auditing."""
+    states = {}
+    for element in elements:
+        if not element.get("checkable"):
+            continue
+        key = "|".join((
+            element.get("resource_id", ""),
+            element.get("text", ""),
+            str(element.get("bbox", "")),
+        ))
+        states[key] = {
+            "text": element.get("text", ""),
+            "checked": bool(element.get("checked")),
+        }
+    return states
+
+
+def _screen_name(elements: list) -> str:
+    """Infer a screen title from the largest labelled accessibility node."""
+    labelled = [el for el in elements if el.get("text") and el.get("bbox")]
+    if not labelled:
+        return "unknown"
+    titled = [el for el in labelled if el.get("is_title")]
+    if titled:
+        return titled[0].get("text") or "unknown"
+    title = max(
+        labelled,
+        key=lambda el: (el["bbox"][2] - el["bbox"][0]) *
+                       (el["bbox"][3] - el["bbox"][1]),
+    )
+    return title.get("text") or "unknown"
 
 
 def _do_swipe(driver) -> None:
@@ -165,6 +203,7 @@ def main():
 
     SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
     JSON_DIR.mkdir(parents=True, exist_ok=True)
+    print(f"  Run output: {VISION_DIR}")
 
     print("=" * 55)
     print(" Architecture B — Vision Pipeline (PES University 101)")
@@ -199,6 +238,14 @@ def main():
                 print(f"[explore_vision] OCR failed: {e}")
                 ocr_results = []
 
+            # Appium's hierarchy supplies exact labels and bounds even when
+            # OCR is unavailable and YOLO has no UI-trained detections.
+            try:
+                accessibility_results = extract_accessibility(driver)
+            except Exception as e:
+                print(f"[explore_vision] Accessibility extraction failed: {e}")
+                accessibility_results = []
+
             # ── Module 4: Merge ───────────────────────────────────────────
             screen_data = merge(
                 step=step,
@@ -206,6 +253,7 @@ def main():
                 yolo_detections=yolo_results,
                 ocr_results=ocr_results,
                 output_dir=str(JSON_DIR),
+                accessibility_results=accessibility_results,
             )
 
             # ── Module 5: LLM decides next action ─────────────────────────
@@ -234,11 +282,28 @@ def main():
                 "action":     action.get("action"),
                 "target":     action.get("target", ""),
                 "bbox":       action.get("bbox"),
-                "value":      action.get("value", ""),
+                "value":      "[REDACTED]" if action.get("action") == "type" else action.get("value", ""),
                 "reason":     action.get("reason", ""),
                 "timestamp":  datetime.now(timezone.utc).isoformat(),
                 "elements_detected": len(screen_data.get("elements", [])),
+                "detection_counts": screen_data.get("detection_counts", {}),
+                "execution": {"status": "not_executed"},
             }
+            action_index = action.get("element_index")
+            selected = (
+                screen_data["elements"][action_index]
+                if isinstance(action_index, int) and 0 <= action_index < len(screen_data["elements"])
+                else None
+            )
+            if selected:
+                log_entry["target_control"] = {
+                    "text": selected.get("text", ""),
+                    "resource_id": selected.get("resource_id", ""),
+                    "clickable": bool(selected.get("clickable")),
+                    "checkable": bool(selected.get("checkable")),
+                    "checked_before": bool(selected.get("checked")),
+                }
+            before_states = _checkable_states(screen_data.get("elements", []))
             exploration_history.append(log_entry)
             print(f"[explore_vision] Logged step {step}")
 
@@ -248,13 +313,32 @@ def main():
                 break
 
             # ── Exploration Controller executes action ─────────────────────
-            if step < MAX_STEPS:
+            if action.get("action") != "done":
                 try:
                     action["_screenshot_path"] = screenshot_path
-                    execute_action(driver, action)
+                    execution = execute_action(driver, action)
                     time.sleep(1.5)   # let screen settle
+                    screenshot_after = capture_screenshot(
+                        driver, str(SCREENSHOTS_DIR), step, suffix="after"
+                    )
+                    after_accessibility = extract_accessibility(driver)
+                    after_states = _checkable_states(after_accessibility)
+                    changed_states = {
+                        key: {"before": before_states.get(key), "after": after_states.get(key)}
+                        for key in before_states.keys() | after_states.keys()
+                        if before_states.get(key) != after_states.get(key)
+                    }
+                    execution.update({
+                        "screenshot_after": screenshot_after,
+                        "screen_after": _screen_name(after_accessibility),
+                        "checkable_states_before": before_states,
+                        "checkable_states_after": after_states,
+                        "state_changes": changed_states,
+                    })
+                    log_entry["execution"] = execution
                 except Exception as e:
                     print(f"[explore_vision] Execute failed: {e} — continuing")
+                    log_entry["execution"] = {"status": "error", "error": str(e)}
 
     except Exception as fatal:
         print(f"\n[explore_vision] FATAL: {fatal}")

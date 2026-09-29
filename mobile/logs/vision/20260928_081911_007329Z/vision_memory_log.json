@@ -1,0 +1,82 @@
+[
+  {
+    "step": 1,
+    "screen": "Calls & SMS",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_01_20260928_081922.png",
+    "action": "tap",
+    "target": "Navigate up",
+    "bbox": [
+      0,
+      128,
+      147,
+      275
+    ],
+    "value": "",
+    "reason": "Tap the 'Navigate up' button to explore other options.",
+    "timestamp": "2026-09-28T08:20:28.145852+00:00",
+    "elements_detected": 8
+  },
+  {
+    "step": 2,
+    "screen": "Network & internet",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_02_20260928_082030.png",
+    "action": "tap",
+    "target": "Off",
+    "bbox": [
+      189,
+      1484,
+      240,
+      1535
+    ],
+    "value": "",
+    "reason": "Tapping the 'Off' button to explore its functionality",
+    "timestamp": "2026-09-28T08:22:40.099885+00:00",
+    "elements_detected": 28
+  },
+  {
+    "step": 3,
+    "screen": "Hotspot & tethering",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_03_20260928_082242.png",
+    "action": "tap",
+    "target": "Wi\u2013Fi hotspot",
+    "bbox": [
+      63,
+      840,
+      373,
+      911
+    ],
+    "value": "",
+    "reason": "Tap on Wi\u2013Fi hotspot to explore its functionality",
+    "timestamp": "2026-09-28T08:24:28.595622+00:00",
+    "elements_detected": 15
+  },
+  {
+    "step": 4,
+    "screen": "Wi\u2011Fi hotspot",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_04_20260928_082430.png",
+    "action": "tap",
+    "target": "Use Wi\u2011Fi hotspot",
+    "bbox": [
+      116,
+      703,
+      776,
+      774
+    ],
+    "value": "",
+    "reason": "Tap the 'Use Wi\u2011Fi hotspot' button to enable the hotspot.",
+    "timestamp": "2026-09-28T08:26:49.233082+00:00",
+    "elements_detected": 22
+  },
+  {
+    "step": 5,
+    "screen": "Wi\u2011Fi hotspot",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_05_20260928_082651.png",
+    "action": "swipe",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "forced: repeated target",
+    "timestamp": "2026-09-28T08:28:13.168437+00:00",
+    "elements_detected": 22
+  }
+]

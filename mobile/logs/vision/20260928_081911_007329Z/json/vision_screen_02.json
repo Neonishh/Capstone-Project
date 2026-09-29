@@ -1,0 +1,399 @@
+{
+  "step": 2,
+  "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_02_20260928_082030.png",
+  "screen": "Network & internet",
+  "elements": [
+    {
+      "type": "accessibility",
+      "text": "Network & internet",
+      "bbox": [
+        0,
+        0,
+        1080,
+        598
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "com.android.settings:id/collapsing_toolbar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Navigate up",
+      "bbox": [
+        0,
+        128,
+        147,
+        275
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        598,
+        1080,
+        804
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Internet",
+      "bbox": [
+        189,
+        640,
+        369,
+        711
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "AndroidWifi",
+      "bbox": [
+        189,
+        711,
+        381,
+        762
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        804,
+        1080,
+        1010
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Calls & SMS",
+      "bbox": [
+        189,
+        846,
+        473,
+        917
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "T-Mobile",
+      "bbox": [
+        189,
+        917,
+        329,
+        968
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1010,
+        1080,
+        1216
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "SIMs",
+      "bbox": [
+        189,
+        1052,
+        307,
+        1123
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "T-Mobile",
+      "bbox": [
+        189,
+        1123,
+        329,
+        1174
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1216,
+        1080,
+        1371
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Airplane mode",
+      "bbox": [
+        189,
+        1258,
+        531,
+        1329
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1230,
+        1038,
+        1356
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "resource_id": "android:id/switch_widget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1371,
+        1080,
+        1577
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Hotspot & tethering",
+      "bbox": [
+        189,
+        1413,
+        646,
+        1484
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Off",
+      "bbox": [
+        189,
+        1484,
+        240,
+        1535
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1577,
+        1080,
+        1783
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Data Saver",
+      "bbox": [
+        189,
+        1619,
+        444,
+        1690
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Off",
+      "bbox": [
+        189,
+        1690,
+        240,
+        1741
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1783,
+        1080,
+        1989
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "VPN",
+      "bbox": [
+        189,
+        1825,
+        294,
+        1896
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "None",
+      "bbox": [
+        189,
+        1896,
+        276,
+        1947
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1989,
+        1080,
+        2144
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Mobile plan",
+      "bbox": [
+        63,
+        2031,
+        337,
+        2102
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        2144,
+        1080,
+        2209
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Private DNS",
+      "bbox": [
+        63,
+        2186,
+        344,
+        2209
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Automatic",
+      "bbox": [
+        63,
+        2257,
+        232,
+        2308
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    }
+  ]
+}
