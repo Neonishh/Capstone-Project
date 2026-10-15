@@ -1,36 +1,5 @@
 'use strict';
 
-/**
- * contextBuilder.js
- *
- * Responsibility:
- *
- * Convert the raw memory log produced during Playwright exploration into
- * a structured context that can be given to the test-generation LLM.
- *
- * IMPORTANT:
- *
- * This file does NOT call the LLM.
- *
- * It organizes factual evidence that was actually observed during
- * exploration.
- *
- * Pipeline:
- *
- *   Playwright
- *       ↓
- *   Memory Log
- *       ↓
- *   Context Builder
- *       ↓
- *   Test Generator LLM
- *       ↓
- *   Test Cases
- *
- * The Context Builder should not invent functionality.
- */
-
-
 // ============================================================================
 // CONFIGURATION
 // ============================================================================
