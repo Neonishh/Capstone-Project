@@ -45,6 +45,7 @@ build/
 Thumbs.db
 
 # Shared database bundles, snapshots, credentials and run artifacts
+# Covers mobile/logs/ too, including screenshots/old/.
 database/local/
 database/backups/
 *.db

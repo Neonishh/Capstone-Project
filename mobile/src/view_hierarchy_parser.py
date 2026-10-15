@@ -91,11 +91,18 @@ def parse_elements(xml_source: str) -> list:
         if not (is_interactive_class or clickable):
             continue
 
-        # For generic views/layouts, only keep if clickable
+        # For generic views/layouts and plain TextViews, only keep if
+        # clickable. TextView's comment above says "included when
+        # clickable=true" but it used to sit in INTERACTIVE_CLASSES
+        # unconditionally, which let non-interactive labels (e.g. a
+        # screen's title bar) leak into the element list. The LLM would
+        # then tap them, nothing would happen, and it'd tap them again -
+        # a real stuck loop that was entirely avoidable.
         if class_name in {
             "android.view.View",
             "android.widget.LinearLayout",
             "android.widget.RelativeLayout",
+            "android.widget.TextView",
         } and not clickable:
             continue
 

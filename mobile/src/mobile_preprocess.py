@@ -89,14 +89,33 @@ def _has_identifying_info(el: dict) -> bool:
     )
 
 
-def build_exploration_prompt(elements: list, memory_log: list) -> str:
+def get_tried_targets(memory_log: list, current_url: str) -> set:
+    """
+    Returns the set of 'target' values (resource_id or class name) already
+    attempted on the given screen, based on the exploration log so far.
+
+    Shared by build_exploration_prompt() (to tell the LLM what not to
+    repeat) and explore_mobile.py's post-decision enforcement check (to
+    catch it when it repeats something anyway - smaller/local models don't
+    reliably follow the prompt's "don't repeat this" instruction, so the
+    pipeline can't only rely on asking nicely).
+    """
+    if not current_url:
+        return set()
+    return {
+        s["target"] for s in memory_log
+        if s.get("from_url") == current_url and s.get("target")
+    }
+
+
+def build_exploration_prompt(elements: list, memory_log: list, current_url: str = None) -> str:
     """
     Builds the LLM prompt for deciding the next exploration action.
     Mobile equivalent of buildExplorationPrompt() in preprocess.js.
 
     Expected LLM response format:
     {
-      "action": "tap" | "type" | "swipe" | "done",
+      "action": "tap" | "type" | "swipe" | "back" | "done",
       "elementId": <int or null>,
       "resource_id": "<resource-id string>",
       "value": "<text to type, only for type action>",
@@ -104,8 +123,12 @@ def build_exploration_prompt(elements: list, memory_log: list) -> str:
     }
 
     Args:
-        elements:   Preprocessed element list
-        memory_log: Current exploration log (may be empty on step 0)
+        elements:    Preprocessed element list
+        memory_log:  Current exploration log (may be empty on step 0)
+        current_url: "package/activity" of the screen being decided on right
+                     now, used to tell the LLM what it's already tried HERE
+                     so it explores sideways (back + try a sibling) instead
+                     of repeating itself or giving up with "done" too early.
 
     Returns:
         Prompt string to pass to call_llm()
@@ -121,6 +144,12 @@ def build_exploration_prompt(elements: list, memory_log: list) -> str:
         }
         for s in memory_log[-5:]
     ]
+
+    # What's already been attempted on THIS specific screen, so the LLM
+    # doesn't retap the same element or think it's found something new when
+    # it hasn't. Without this, dead-ends just repeat until loop-detection
+    # kicks in and the whole run stops early.
+    tried_on_this_screen = sorted(get_tried_targets(memory_log, current_url))
 
     # Compact element list — only what the LLM needs
     compact_elements = [
@@ -140,26 +169,35 @@ def build_exploration_prompt(elements: list, memory_log: list) -> str:
         if recent_steps
         else "No steps yet — this is the first action."
     )
+    tried_str = (
+        json.dumps(tried_on_this_screen)
+        if tried_on_this_screen
+        else "None yet — this screen is unexplored."
+    )
 
     prompt = f"""You are an AI mobile app exploration agent. Your job is to decide the NEXT single action to systematically explore an Android app and discover functional flows (login, navigation, form submission, etc.).
 
 CURRENT SCREEN ELEMENTS (filtered, max 50):
 {json.dumps(compact_elements, indent=2)}
 
+ELEMENTS ALREADY TRIED ON THIS SCREEN:
+{tried_str}
+
 RECENT EXPLORATION HISTORY (last 5 steps):
 {history_str}
 
 RULES:
-1. Prefer unexplored elements — avoid repeating resource_ids already in history.
+1. Prefer unexplored elements — never repeat something already listed under "ELEMENTS ALREADY TRIED ON THIS SCREEN".
 2. Prefer meaningful actions: login forms, nav buttons, submit buttons.
 3. For "type" actions, provide realistic test data (e.g. email: "test@example.com").
-4. If all elements are exhausted or you detect a loop, return action "done".
-5. Do NOT return explanations — return ONLY valid JSON.
+4. If every element on this screen has already been tried, or this screen is a dead end, return action "back" to return to the previous screen and try a different, unexplored path from there — this keeps exploration going wider across the app instead of stopping.
+5. Only return "done" if there is truly nothing left to explore — e.g. you are back at the app's starting screen with no untried elements remaining, or you've thoroughly covered the app's main flows.
+6. Do NOT return explanations — return ONLY valid JSON.
 
 Respond with EXACTLY this JSON structure (no markdown, no extra text):
 {{
-  "action": "tap" | "type" | "swipe" | "done",
-  "elementId": <number from list above, or null for done>,
+  "action": "tap" | "type" | "swipe" | "back" | "done",
+  "elementId": <number from list above, or null for back/done>,
   "resource_id": "<resource-id string or empty>",
   "value": "<text to type, only for type action>",
   "reason": "<one sentence explanation>"
