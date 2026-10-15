@@ -22,12 +22,14 @@ STUB_LLM=true
 3. Run the explorer (pass a URL or defaults to https://demoqa.com):
 
 ```bash
-npm start -- https://demoqa.com
+npm start -- https://demoqa.com --app demoqa --comparison demoqa-01
 # or
-npm run explore -- https://demoqa.com
+npm run explore -- https://demoqa.com --app demoqa --comparison demoqa-01
 ```
 
 Notes
 
 - When `STUB_LLM=true` the explorer will not call the Groq API and will instead return a noop `done` action.
 - Screenshots and logs are written to the `logs/` directory.
+
+Database uploads: see ../database/README.md. Supply --app and --comparison when starting exploration; execution reuses the saved identifiers.
