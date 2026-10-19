@@ -1,5 +1,7 @@
 # Mobile Architecture B — Vision Pipeline
 
+New teammate? Start with [mobile setup](../README.md) for installation, credentials, model weights, and smoke testing.
+
 Produces a structured JSON describing the current Android screen using
 screenshots, YOLO object detection, and OCR text extraction.
 

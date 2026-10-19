@@ -50,7 +50,7 @@ Thumbs.db
 /mobile/logs/
 
 # Local model weights; keep model documentation versionable
-/mobile/models/*.pt
+
 /mobile/**/yolov8n.pt
 
 # Generated web vision artifacts
