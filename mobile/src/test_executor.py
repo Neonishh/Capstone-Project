@@ -27,6 +27,7 @@ def execute_test_cases(
     test_cases: list,
     driver,
     screenshots_dir: str,
+    *, results=None,
 ) -> list:
     """
     Runs each test case against the live Appium driver and returns results.
@@ -40,7 +41,7 @@ def execute_test_cases(
         List of result dicts (one per test case)
     """
     Path(screenshots_dir).mkdir(parents=True, exist_ok=True)
-    results = []
+    results = [] if results is None else results
 
     for tc in test_cases:
         tc_id  = tc.get("test_case_id") or tc.get("id", "TC000")

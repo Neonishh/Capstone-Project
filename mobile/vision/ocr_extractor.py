@@ -17,6 +17,16 @@ Dependencies:
 """
 
 from pathlib import Path
+from functools import lru_cache
+
+
+@lru_cache(maxsize=4)
+def _reader(languages):
+    import easyocr
+    import torch
+    import os
+    torch.set_num_threads(max(1, int(os.environ.get("MOBILE_TORCH_THREADS", "4"))))
+    return easyocr.Reader(list(languages), gpu=False, verbose=False)
 
 
 def extract_text(image_path: str, languages: list = None) -> list:
@@ -36,9 +46,11 @@ def extract_text(image_path: str, languages: list = None) -> list:
     """
     try:
         import easyocr
+        import cv2
     except ImportError:
         raise RuntimeError(
-            "[ocr_extractor] easyocr not installed. Run: pip install easyocr"
+            "[ocr_extractor] EasyOCR/OpenCV dependency missing. "
+            "Run: pip install easyocr opencv-python"
         )
 
     if languages is None:
@@ -47,9 +59,26 @@ def extract_text(image_path: str, languages: list = None) -> list:
     if not Path(image_path).exists():
         raise FileNotFoundError(f"[ocr_extractor] Image not found: {image_path}")
 
+    # Read and convert explicitly instead of passing a filename. EasyOCR's
+    # filename path can leave a 3-channel image in its grayscale recognition
+    # path after another OpenCV-based detector has run in the same process.
+    image = cv2.imread(str(image_path), cv2.IMREAD_UNCHANGED)
+    if image is None:
+        raise ValueError(f"[ocr_extractor] Could not read image: {image_path}")
+    if image.ndim == 2:
+        gray = image
+    elif image.ndim == 3 and image.shape[2] == 4:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGRA2GRAY)
+    elif image.ndim == 3 and image.shape[2] == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        raise ValueError(
+            f"[ocr_extractor] Unsupported screenshot shape: {image.shape}"
+        )
+
     # gpu=False works everywhere; set gpu=True if CUDA is available for speed
-    reader  = easyocr.Reader(languages, gpu=False, verbose=False)
-    raw     = reader.readtext(image_path)
+    reader  = _reader(tuple(languages))
+    raw     = reader.readtext(gray)
 
     results = []
     skipped = 0

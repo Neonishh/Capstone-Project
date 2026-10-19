@@ -32,6 +32,7 @@ from src.test_generator import generate_test_cases
 from src.script_generator import generate_script
 from src.test_executor import execute_test_cases
 from src.report_generator import generate_report
+from src.database_storage import MobileRun, add_database_arguments
 
 LOGS_DIR        = Path(__file__).parent / "logs"
 SCREENSHOTS_DIR = LOGS_DIR / "screenshots"
@@ -70,6 +71,7 @@ def build_driver():
 
 def main():
     parser = argparse.ArgumentParser(description="Mobile Test Pipeline Runner")
+    add_database_arguments(parser)
     parser.add_argument("--log-path", default=DEFAULT_LOG_PATH,
                         help="Path to mobile_memory_log.json")
     parser.add_argument("--skip-execution", action="store_true",
@@ -111,18 +113,30 @@ def main():
 
     # ── Stage 4: Execute test cases ───────────────────────────────────────────
     print("\n[pipeline] Stage 4: Executing test cases on device...")
-    driver = build_driver()
-    time.sleep(4)  # wait for app to fully launch
-
+    session = MobileRun("A", args.app or APP_PACKAGE, args.comparison, memory_log, test_cases) if args.comparison else None
+    results = []
+    driver = None
+    finished = False
+    if session:
+        session.save(results)
     try:
-        results = execute_test_cases(
+        driver = build_driver()
+        time.sleep(4)  # wait for app to fully launch
+        execute_test_cases(
             test_cases,
             driver,
             str(SCREENSHOTS_DIR),
+            results=results,
         )
+        finished = True
     finally:
-        driver.quit()
-        print("[pipeline] Driver closed.")
+        try:
+            if driver is not None:
+                driver.quit()
+                print("[pipeline] Driver closed.")
+        finally:
+            if session:
+                session.save(results, finished=finished)
 
     # ── Stage 5: Generate report ──────────────────────────────────────────────
     print("\n[pipeline] Stage 5: Generating execution report...")

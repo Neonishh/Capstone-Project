@@ -1,98 +1,163 @@
-"""
-yolo_detector.py
-Module 2 — YOLO UI Component Detection
+"""Run a configurable YOLO detector on Android screenshots.
 
-Responsibility:
-  Run YOLOv8 object detection on a screenshot to identify UI components
-  such as buttons, text fields, icons, checkboxes, and images.
-
-  Uses ultralytics YOLOv8. For UI detection we use a pretrained general
-  model (yolov8n.pt) as a fallback — ideally you'd fine-tune on a UI
-  dataset, but for the demo the general model detects enough components
-  to show the pipeline working.
-
-  Output per detection:
-  {
-    "class":      str,    # e.g. "button", "text_field", "icon"
-    "bbox":       [x1, y1, x2, y2],   # pixel coordinates
-    "confidence": float   # 0.0 to 1.0
-  }
-
-Dependencies:
-  pip install ultralytics
+Set ``MOBILE_YOLO_MODEL`` to a UI-trained Ultralytics ``.pt`` file. The
+default ``yolov8n.pt`` remains available as a generic-object fallback, but it
+is not trained to recognize Android controls.
 """
 
+import os
+from functools import lru_cache
 from pathlib import Path
 
-# YOLO class index → UI component name mapping.
-# YOLOv8n trained on COCO doesn't have UI-specific classes, so we map
-# the most visually similar COCO classes to UI terms for the demo.
-# When a proper UI-trained YOLO model is available, replace this map.
+
+MOBILE_DIR = Path(__file__).resolve().parent.parent
+DEFAULT_MODEL = "yolov8n.pt"
+DEFAULT_CONFIDENCE = 0.25
+
+# Keep compatibility with the old generic COCO model. These labels are only
+# useful when running a COCO model; they do not make COCO a UI detector.
 _COCO_TO_UI = {
-    "person":        "icon",
-    "cell phone":    "button",
-    "laptop":        "screen",
-    "tv":            "screen",
-    "keyboard":      "text_field",
-    "mouse":         "button",
-    "remote":        "button",
-    "clock":         "icon",
-    "book":          "image",
-    "scissors":      "icon",
-    "toothbrush":    "icon",
+    "person": "icon",
+    "cell phone": "button",
+    "laptop": "screen",
+    "tv": "screen",
+    "keyboard": "text_field",
+    "mouse": "button",
+    "remote": "button",
+    "clock": "icon",
+    "book": "image",
+    "scissors": "icon",
+    "toothbrush": "icon",
 }
 
-_DEFAULT_UI_CLASS = "ui_element"
-_MIN_CONFIDENCE   = 0.25   # discard very low confidence detections
+# Normalize common class names used by mobile GUI datasets to the vocabulary
+# consumed by the rest of this pipeline. Unlisted class names are preserved.
+_UI_CLASS_ALIASES = {
+    "button": "button",
+    "text button": "button",
+    "image button": "button",
+    "icon button": "button",
+    "input": "text_field",
+    "text input": "text_field",
+    "input field": "text_field",
+    "edit text": "text_field",
+    "edittext": "text_field",
+    "text field": "text_field",
+    "textfield": "text_field",
+    "search box": "text_field",
+    "checkbox": "checkbox",
+    "check box": "checkbox",
+    "switch": "switch",
+    "toggle": "switch",
+    "radio button": "radio",
+    "radio": "radio",
+    "radiobutton": "radio",
+    "tab": "tab",
+    "text view": "text",
+    "textview": "text",
+    "label": "text",
+    "image view": "image",
+    "imageview": "image",
+    "icon": "icon",
+    "link": "link",
+    "toolbar": "toolbar",
+    "header bar": "toolbar",
+}
 
 
-def detect_ui_components(image_path: str, model_path: str = "yolov8n.pt") -> list:
-    """
-    Runs YOLO detection on a screenshot and returns UI component annotations.
+def _configured_model_path(model_path=None) -> str:
+    """Resolve explicit/env paths relative to cwd or the mobile project."""
+    configured = model_path or os.environ.get("MOBILE_YOLO_MODEL") or DEFAULT_MODEL
+    candidate = Path(configured).expanduser()
 
-    Args:
-        image_path: Path to the screenshot PNG
-        model_path: Path to YOLO weights file (defaults to yolov8n.pt,
-                    auto-downloaded by ultralytics on first run)
+    if candidate.is_absolute():
+        if not candidate.is_file():
+            raise FileNotFoundError(f"[yolo_detector] Model weights not found: {candidate}")
+        return str(candidate.resolve())
 
-    Returns:
-        List of detection dicts:
-        [
-          { "class": "button", "bbox": [x1, y1, x2, y2], "confidence": 0.94 },
-          ...
-        ]
-    """
+    # First honor a path relative to the caller's current working directory.
+    if candidate.is_file():
+        return str(candidate.resolve())
+
+    # Then honor paths relative to the mobile/ folder, independent of where
+    # the script was launched from.
+    project_candidate = MOBILE_DIR / candidate
+    if project_candidate.is_file():
+        return str(project_candidate.resolve())
+
+    # Ultralytics recognizes built-in model names such as yolov8n.pt and may
+    # download them on first use. Custom missing .pt paths should fail clearly.
+    if str(configured) == DEFAULT_MODEL:
+        return DEFAULT_MODEL
+    raise FileNotFoundError(
+        f"[yolo_detector] Model weights not found: {configured}. "
+        "Set MOBILE_YOLO_MODEL to an existing weights file."
+    )
+
+
+@lru_cache(maxsize=4)
+def _load_model(model_path: str):
+    """Load each configured model once per process, not once per screenshot."""
     try:
         from ultralytics import YOLO
-    except ImportError:
+    except ImportError as exc:
         raise RuntimeError(
             "[yolo_detector] ultralytics not installed. Run: pip install ultralytics"
-        )
+        ) from exc
+    print(f"[yolo_detector] Loading model: {model_path}")
+    return YOLO(model_path)
 
-    if not Path(image_path).exists():
+
+def _confidence_threshold() -> float:
+    try:
+        threshold = float(os.environ.get("MOBILE_YOLO_CONFIDENCE", DEFAULT_CONFIDENCE))
+    except ValueError as exc:
+        raise ValueError("MOBILE_YOLO_CONFIDENCE must be a number between 0 and 1") from exc
+    if not 0 <= threshold <= 1:
+        raise ValueError("MOBILE_YOLO_CONFIDENCE must be between 0 and 1")
+    return threshold
+
+
+def _normalize_class(raw_class: str) -> str:
+    label = " ".join(str(raw_class).strip().casefold().replace("_", " ").replace("-", " ").split())
+    if label in _UI_CLASS_ALIASES:
+        return _UI_CLASS_ALIASES[label]
+    if label in _COCO_TO_UI:
+        return _COCO_TO_UI[label]
+    # Preserve model-specific labels instead of collapsing every unknown
+    # mobile UI class into the misleading generic "ui_element" label.
+    return label.replace(" ", "_") or "ui_element"
+
+
+def detect_ui_components(image_path: str, model_path: str = None) -> list:
+    """Detect screen elements and return class, pixel bbox, and confidence.
+
+    ``model_path`` overrides ``MOBILE_YOLO_MODEL``. The model must return
+    Ultralytics-compatible boxes; model class names are normalized to common
+    mobile UI names where possible and otherwise preserved.
+    """
+    image = Path(image_path).expanduser()
+    if not image.is_file():
         raise FileNotFoundError(f"[yolo_detector] Image not found: {image_path}")
 
-    model   = YOLO(model_path)
-    results = model(image_path, verbose=False)
+    model = _load_model(_configured_model_path(model_path))
+    results = model(str(image), verbose=False)
+    min_confidence = _confidence_threshold()
 
     detections = []
     for result in results:
         for box in result.boxes:
-            conf  = float(box.conf[0])
-            if conf < _MIN_CONFIDENCE:
+            confidence = float(box.conf[0])
+            if confidence < min_confidence:
                 continue
 
-            # xyxy format: [x1, y1, x2, y2]
-            x1, y1, x2, y2 = [int(v) for v in box.xyxy[0]]
-
-            raw_class  = result.names[int(box.cls[0])]
-            ui_class   = _COCO_TO_UI.get(raw_class, _DEFAULT_UI_CLASS)
-
+            x1, y1, x2, y2 = [int(value) for value in box.xyxy[0]]
+            raw_class = result.names[int(box.cls[0])]
             detections.append({
-                "class":      ui_class,
-                "bbox":       [x1, y1, x2, y2],
-                "confidence": round(conf, 3),
+                "class": _normalize_class(raw_class),
+                "bbox": [x1, y1, x2, y2],
+                "confidence": round(confidence, 3),
             })
 
-    print(f"[yolo_detector] {len(detections)} component(s) detected in {Path(image_path).name}")
+    print(f"[yolo_detector] {len(detections)} component(s) detected in {image.name}")
     return detections

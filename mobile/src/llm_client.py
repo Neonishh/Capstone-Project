@@ -245,43 +245,8 @@ def _call_groq_raw(prompt: str) -> str:
     return response.choices[0].message.content
 
 def _call_gemini_raw(prompt: str) -> str:
-    """Calls Gemini API and returns the raw text content."""
-    try:
-        import google.generativeai as genai
-    except ImportError:
-        raise RuntimeError(
-            "[llm_client] google-generativeai not installed. "
-            "Run: pip install google-generativeai"
-        )
-
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError(
-            "[llm_client] GEMINI_API_KEY environment variable not set."
-        )
-
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_name)
-
-    max_retries = 3
-    backoff_seconds = 5
-
-    for attempt in range(1, max_retries + 1):
-        try:
-            response = model.generate_content(
-                prompt,
-                generation_config={"temperature": 0.2},
-            )
-            return response.text
-        except Exception as e:
-            is_transient = "503" in str(e) or "UNAVAILABLE" in str(e)
-            if is_transient and attempt < max_retries:
-                print(f"[llm_client] Gemini overloaded (attempt {attempt}/{max_retries}), retrying in {backoff_seconds}s...")
-                time.sleep(backoff_seconds)
-                backoff_seconds *= 2
-                continue
-            raise
+    from .gemini_client import generate
+    return generate(prompt)
 
 
 def _call_ollama_raw(prompt: str) -> str:

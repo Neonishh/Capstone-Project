@@ -1,0 +1,337 @@
+[
+  {
+    "id": "PROFILE-NAME",
+    "description": "Illustrative contract: names are required, at most 20 characters, and saved names persist. Adapt to your actual app requirements.",
+    "scenarios": [
+      {
+        "id": "valid-name",
+        "category": "valid",
+        "objective": "Profile name: valid",
+        "setup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Ada",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "cleanup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          },
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Original name",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "verification": {
+          "type": "postcondition",
+          "texts": [
+            "Ada"
+          ]
+        }
+      },
+      {
+        "id": "invalid-empty",
+        "category": "invalid",
+        "objective": "Profile name: invalid",
+        "setup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "cleanup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          },
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Original name",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "verification": {
+          "type": "postcondition",
+          "texts": [
+            "Name is required"
+          ]
+        }
+      },
+      {
+        "id": "boundary-20",
+        "category": "boundary",
+        "objective": "Profile name: boundary",
+        "setup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "AAAAAAAAAAAAAAAAAAAA",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "cleanup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          },
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Original name",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "verification": {
+          "type": "postcondition",
+          "texts": [
+            "AAAAAAAAAAAAAAAAAAAA"
+          ]
+        }
+      },
+      {
+        "id": "cancel-edit",
+        "category": "cancellation",
+        "objective": "Cancelling preserves original name",
+        "setup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          },
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Original name",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Discard me",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Cancel"
+            }
+          }
+        ],
+        "cleanup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          },
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Original name",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "verification": {
+          "type": "postcondition",
+          "texts": [
+            "Original name"
+          ]
+        }
+      },
+      {
+        "id": "saved-name-survives-relaunch",
+        "category": "persistence",
+        "objective": "Saved profile name survives app relaunch",
+        "setup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          }
+        ],
+        "steps": [
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Ada",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          },
+          {
+            "action": "relaunch"
+          }
+        ],
+        "cleanup": [
+          {
+            "action": "tap",
+            "target": {
+              "text": "Edit profile"
+            }
+          },
+          {
+            "action": "type",
+            "target": {
+              "resource_id": "com.example.app:id/display_name"
+            },
+            "value": "Original name",
+            "clear": true,
+            "expect_change": false
+          },
+          {
+            "action": "tap",
+            "target": {
+              "text": "Save"
+            },
+            "expect_change": false
+          }
+        ],
+        "verification": {
+          "type": "postcondition",
+          "texts": [
+            "Ada"
+          ]
+        }
+      }
+    ]
+  }
+]

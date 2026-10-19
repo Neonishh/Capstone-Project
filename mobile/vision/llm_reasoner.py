@@ -107,6 +107,10 @@ def _build_prompt(screen_data: dict, history: list) -> str:
     # Only elements with explicit interactivity are valid tap targets.
     elements_summary = []
     for index, el in enumerate(screen_data.get("elements", [])):
+        # YOLO/OCR can produce many duplicate visual boxes. Keep the LLM
+        # decision prompt focused on controls Android says are interactive.
+        if not (el.get("clickable") or el.get("checkable") or el.get("editable")):
+            continue
         entry = {
             "element_index": index,
             "type": el.get("type", "unknown"),
@@ -119,9 +123,9 @@ def _build_prompt(screen_data: dict, history: list) -> str:
         if el.get("checkable"):
             entry["checked"] = bool(el.get("checked"))
         elements_summary.append(entry)
-    actionable_summary = [
-        el for el in elements_summary if el["interactive"] or el["editable"]
-    ]
+        if len(elements_summary) >= 24:
+            break
+    actionable_summary = elements_summary
 
     # Last 5 history entries only
     recent_history = [
@@ -130,7 +134,7 @@ def _build_prompt(screen_data: dict, history: list) -> str:
     ]
 
     # Targets already tried — tell LLM explicitly not to repeat them
-    tried_targets = list({h.get("target", "") for h in history if h.get("target")})
+    tried_targets = list({h.get("target", "") for h in history if h.get("target") and h.get("screen_key") == screen_data.get("coverage_screen_key")})
 
     history_str = (
         json.dumps(recent_history, indent=2)
@@ -143,10 +147,7 @@ def _build_prompt(screen_data: dict, history: list) -> str:
 
 CURRENT SCREEN: "{screen_data.get('screen', 'unknown')}"
 
-DETECTED UI ELEMENTS (from YOLO + OCR):
-{json.dumps(elements_summary, indent=2)}
-
-INTERACTIVE CONTROLS (the only valid tap targets):
+CURRENT INTERACTIVE CONTROLS (the only valid tap/type targets):
 {json.dumps(actionable_summary, indent=2)}
 
 PREVIOUS ACTIONS:
@@ -159,7 +160,7 @@ RULES:
 1. Tap only an element whose interactive field is true. Use its element_index.
 2. Never tap plain text/title elements or guess a target absent from the list.
 3. For "type", choose only an element whose editable field is true.
-4. If no untried interactive control remains, return "swipe" to explore more content.
+4. If no untried interactive control remains, return "swipe" to explore more content, or "back" to explore another feature.
 5. Only return "done" if there is truly nothing left to explore.
 6. Return ONLY valid JSON — no markdown, no explanation.
 
@@ -196,7 +197,7 @@ def _call_ollama(prompt: str) -> str:
 
     host       = os.environ.get("OLLAMA_HOST",  "http://localhost:11434")
     model_name = os.environ.get("OLLAMA_MODEL", "llama3.1")
-    timeout    = int(os.environ.get("OLLAMA_TIMEOUT", 120))
+    timeout    = int(os.environ.get("OLLAMA_TIMEOUT", 60))
 
     payload = json.dumps({
         "model":  model_name,
@@ -232,14 +233,8 @@ def _call_groq(prompt: str) -> str:
 
 
 def _call_gemini(prompt: str) -> str:
-    import google.generativeai as genai
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("[llm_reasoner] GEMINI_API_KEY not set.")
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel(model_name)
-    return model.generate_content(prompt).text
+    from src.gemini_client import generate
+    return generate(prompt)
 
 
 def _call_openai(prompt: str) -> str:

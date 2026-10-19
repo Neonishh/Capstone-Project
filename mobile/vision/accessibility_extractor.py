@@ -52,6 +52,7 @@ def extract_accessibility(driver) -> list:
         target_checkable = checkable
         target_checked = checked
         target_id = node.get("resource-id") or ""
+        target_class = node.get("class", "")
 
         # A row's visible title is often a non-clickable child of a clickable
         # container. Point at the parent control while keeping the useful label.
@@ -67,6 +68,7 @@ def extract_accessibility(driver) -> list:
                         target_checkable = ancestor.get("checkable", "false").lower() == "true"
                         target_checked = ancestor.get("checked", "false").lower() == "true"
                         target_id = ancestor.get("resource-id") or target_id
+                        target_class = ancestor.get("class", target_class)
                     break
                 ancestor = parents.get(ancestor)
 
@@ -75,6 +77,7 @@ def extract_accessibility(driver) -> list:
 
         raw_nodes.append({
             "node": node,
+            "control_class": target_class,
             "label": label,
             "bbox": target_bbox,
             "clickable": target_clickable,
@@ -112,6 +115,7 @@ def extract_accessibility(driver) -> list:
                 item["clickable"] = control["clickable"]
                 item["checkable"] = control["checkable"]
                 item["checked"] = control["checked"]
+                item["control_class"] = control["control_class"]
                 item["resource_id"] = control["resource_id"] or item["resource_id"]
 
         # Prefer useful labels. Unlabelled clickable containers are retained
@@ -133,6 +137,7 @@ def extract_accessibility(driver) -> list:
             safe_label = "[REDACTED]"
         elements.append({
             "type": "accessibility",
+            "control_class": item["control_class"],
             "text": safe_label,
             "bbox": target_bbox,
             "confidence": 1.0,
