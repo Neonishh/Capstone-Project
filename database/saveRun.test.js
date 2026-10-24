@@ -27,3 +27,11 @@ test('offline save survives failed upload, replacement uses same file, success c
     assert.equal(fs.readdirSync(directory).length, 1);
   } finally { fs.rmSync(directory, { recursive: true }); }
 });
+
+test('optional exploration metadata stays independent of execution state', () => {
+  const data = validate({ ...run, model: 'recorded-model', exploration_stop_reason: 'token_budget', exploration_complete: false });
+  assert.equal(data.run_details.exploration_complete, false);
+  assert.equal(data.run_details.llm.model, 'recorded-model');
+  assert.equal(data.execution_state, 'completed');
+  assert.throws(() => validate({ ...run, exploration_complete: 'false' }), /boolean/);
+});

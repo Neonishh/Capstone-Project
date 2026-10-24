@@ -7,7 +7,7 @@
     "explore": "node explore.js",
     "generate:scripts": "node src/scriptGenerator.js",
     "test:generated": "node src/runTests.js",
-    "test": "node --test --test-isolation=none test/*.test.js ../database/*.test.js"
+    "test": "node --test test/*.test.js ../database/*.test.js"
   },
   "keywords": [],
   "author": "",

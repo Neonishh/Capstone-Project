@@ -28,13 +28,32 @@ function validate(run) {
   if (!['completed','incomplete'].includes(run.execution_state)) throw new Error('Invalid execution_state');
   if (Number.isNaN(Date.parse(run.created_at))) throw new Error('Invalid created_at');
   if (!Array.isArray(run.memory_log) || !Array.isArray(run.test_cases)) throw new Error('Logs/cases must be arrays');
+  if (run.run_details != null && (typeof run.run_details !== 'object' || Array.isArray(run.run_details))) throw new Error('run_details must be an object');
+  const details = { ...(run.run_details || {}) };
+  if (details.llm != null && (typeof details.llm !== 'object' || Array.isArray(details.llm))) throw new Error('run_details.llm must be an object');
+  const llm = { ...(details.llm || {}) };
+  for (const [old, target] of [['exploration_stop_reason', 'stop_reason'], ['exploration_complete', 'exploration_complete']]) {
+    if (run[old] != null) {
+      if (details[target] != null && details[target] !== run[old]) throw new Error('Conflicting exploration metadata');
+      details[target] = run[old];
+    }
+  }
+  if (run.model != null) {
+    if (llm.model != null && llm.model !== run.model) throw new Error('Conflicting model metadata');
+    llm.model = run.model;
+  }
+  for (const [key, value] of [['model', llm.model], ['stop_reason', details.stop_reason]]) {
+    if (value != null && (typeof value !== 'string' || !value.trim())) throw new Error(`${key} must be a nonempty string or null`);
+  }
+  if (details.exploration_complete != null && typeof details.exploration_complete !== 'boolean') throw new Error('exploration_complete must be boolean or null');
+  if (Object.keys(llm).length) details.llm = llm;
   const ids = run.test_cases.map(t => t.id);
   if (ids.some(id => typeof id !== 'string' || !id) || new Set(ids).size !== ids.length) throw new Error('Test cases require unique string IDs');
   const normalized = normalizeResults(run.execution_results);
   if (normalized.some(r => !ids.includes(r.id))) throw new Error('Result ID not found in test cases');
   if (run.execution_state === 'completed' && (ids.length === 0 || normalized.length !== ids.length)) throw new Error('Completed runs must have a result for every case');
-  const { owner, ...data } = run; // omit legacy owner from queued bundles
-  return { ...data, execution_results: normalized };
+  const { owner, model, exploration_stop_reason, exploration_complete, ...data } = run; // omit legacy owner from queued bundles
+  return { ...data, run_details: details, execution_results: normalized };
 }
 
 async function uploadRun(run, env = process.env, fetchImpl = fetch) {

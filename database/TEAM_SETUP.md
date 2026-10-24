@@ -120,3 +120,7 @@ After your tests finish, use the Python or Node upload command in the guide with
 your three JSON files. Match app/comparison IDs with the other architecture, but
 use your own unique run ID. No owner ID is needed. Verify one upload before doing
 all websites/apps. I will share the credentials privately.
+
+
+See [shared run metadata](RUN_METADATA.md) for model/stop-reason fields, legacy NULLs,
+web/mobile completion semantics, and existing-project migration instructions.

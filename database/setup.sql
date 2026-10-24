@@ -16,6 +16,8 @@ create table if not exists public.runs (
   test_cases jsonb not null check (jsonb_typeof(test_cases) = 'array'),
   execution_results jsonb not null check (jsonb_typeof(execution_results) = 'array')
 );
+-- Metadata lives in the existing web-compatible JSON object, not view columns.
+alter table public.runs add column if not exists run_details jsonb not null default '{}'::jsonb;
 create index if not exists runs_comparison on public.runs(platform, app_id, comparison_id, architecture);
 alter table public.runs enable row level security;
 revoke all on public.runs from anon, authenticated;
@@ -24,6 +26,10 @@ grant select, insert, update on public.runs to service_role;
 create or replace view public.run_summary with (security_invoker=true) as
 select r.run_id, r.platform, r.architecture, r.app_id,
  r.comparison_id, r.created_at, r.execution_state,
+ r.run_details->>'stop_reason' as exploration_stop_reason,
+ case when jsonb_typeof(r.run_details->'exploration_complete') = 'boolean'
+      then (r.run_details->>'exploration_complete')::boolean end as exploration_complete,
+ r.run_details->'llm'->>'model' as model,
  jsonb_array_length(r.test_cases) as generated,
  (select count(*) from jsonb_array_elements(r.execution_results) e where e->>'status' <> 'skipped') as executed,
  (select count(*) from jsonb_array_elements(r.execution_results) e where e->>'status' = 'passed') as passed,

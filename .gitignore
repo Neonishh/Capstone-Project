@@ -22,11 +22,12 @@ __pycache__/
 mobile/venv/
 venv/
 .venv/
-
+.env
 # Mobile logs & generated files
 mobile/logs/*.json
 mobile/logs/*.txt
 mobile/logs/screenshots/*.png
+mobile/logs/screenshots/old/*.png
 
 # Python egg / dist
 *.egg-info/
@@ -44,14 +45,38 @@ build/
 .DS_Store
 Thumbs.db
 
-# Shared database bundles, snapshots, credentials and run artifacts
-# Covers mobile/logs/ too, including screenshots/old/.
-database/local/
-database/backups/
-*.db
+# Mobile run artifacts (including nested vision runs)
+/mobile/logs/
+
+# Local model weights; keep model documentation versionable
+
+/mobile/**/yolov8n.pt
+
+# Generated web vision artifacts
+/vision/storage/outputs/
+/vision/storage/screenshots/
+/vision/temp_screenshots/
+
+# Template run artifacts
+/claude_template/logs/
+
+# Local environment variants; allow shareable examples
 .env.*
 !.env.example
+!.env.sample
+
+# Shared database offline bundles and exports
+/database/local/
+/database/backups/
+
+# Local database files and run artifacts from all pipelines
+*.db
 **/logs/
 
-# Scripts and manifests regenerated from each experiment
+# Scripts and manifests regenerated from each web experiment
 web/tests/generated/
+
+# Downloaded emulator app binaries
+/mobile/apps/*.apk
+# Local editor settings
+/.vscode/

@@ -6,12 +6,18 @@ import os
 from datetime import datetime
 from pathlib import Path
 from urllib.request import Request, urlopen
+from urllib.error import HTTPError
 from urllib.parse import urlparse
 from uuid import uuid4
 
 LOCAL = Path(__file__).parent / 'local'
 ALIASES = {'expected': 'passed', 'unexpected': 'failed', 'timedOut': 'timed_out'}
 STATUSES = {'passed', 'failed', 'skipped', 'timed_out', 'flaky'}
+
+class SupabaseHTTPError(RuntimeError):
+    """HTTP diagnostics without credentials, headers, payloads or failing row data."""
+    pass
+
 
 def validate(run):
     run = dict(run)
@@ -20,6 +26,37 @@ def validate(run):
         if not isinstance(run.get(key), str) or not run[key].strip():
             raise ValueError(f'Missing {key}')
     datetime.fromisoformat(run['created_at'].replace('Z', '+00:00'))
+    details = run.get('run_details')
+    if details is not None and not isinstance(details, dict):
+        raise ValueError('run_details must be an object or null')
+    details = dict(details or {})
+    llm = details.get('llm')
+    if llm is not None and not isinstance(llm, dict):
+        raise ValueError('run_details.llm must be an object or null')
+    llm = dict(llm or {})
+    # Migrate locally queued flat metadata to the existing shared JSON contract.
+    for old, target in (('exploration_stop_reason', 'stop_reason'), ('exploration_complete', 'exploration_complete')):
+        if old in run:
+            value = run.pop(old)
+            if value is not None:
+                if details.get(target) is not None and details[target] != value:
+                    raise ValueError('Conflicting exploration metadata')
+                details[target] = value
+    if 'model' in run:
+        value = run.pop('model')
+        if value is not None:
+            if llm.get('model') is not None and llm['model'] != value:
+                raise ValueError('Conflicting model metadata')
+            llm['model'] = value
+    for key, value in (('model', llm.get('model')), ('stop_reason', details.get('stop_reason'))):
+        if value is not None and (not isinstance(value, str) or not value.strip()):
+            raise ValueError(f'{key} must be a nonempty string or null')
+    if details.get('exploration_complete') is not None and not isinstance(details['exploration_complete'], bool):
+        raise ValueError('exploration_complete must be boolean or null')
+    if llm:
+        details['llm'] = llm
+    run['run_details'] = details
+
     if run.get('platform') not in ('web', 'mobile') or run.get('architecture') not in ('A', 'B'):
         raise ValueError('Invalid platform/architecture')
     if run.get('execution_state') not in ('completed', 'incomplete'):
@@ -56,9 +93,19 @@ def request(method, query, payload=None, env=None):
                   headers={'apikey': key, 'Authorization': 'Bearer ' + key,
                            'Content-Type': 'application/json',
                            'Prefer': 'resolution=merge-duplicates,return=minimal'})
-    with urlopen(req, timeout=15) as response:
-        data = response.read()
-        return json.loads(data) if data else None
+    try:
+        with urlopen(req, timeout=15) as response:
+            data = response.read()
+            return json.loads(data) if data else None
+    except HTTPError as error:
+        try:
+            diagnostic = json.loads(error.read().decode('utf-8'))
+            code = str(diagnostic.get('code', 'unknown'))[:80]
+        except (ValueError, UnicodeError, AttributeError):
+            code = 'unknown'
+        # Report only status/code, not server details that may include a row's data.
+        raise SupabaseHTTPError(f'Supabase HTTP {error.code} ({code}); check credentials/schema') from None
+
 
 def upload_run(run, env=None):
     request('POST', 'runs?on_conflict=run_id', validate(run), env)
@@ -83,4 +130,4 @@ def save_run_to_db(run, directory=LOCAL, env=None):
         write()
         return {'file': str(file), 'uploaded': True}
     except Exception as error:
-        return {'file': str(file), 'uploaded': False, 'reason': type(error).__name__}
+        return {'file': str(file), 'uploaded': False, 'reason': str(error) if isinstance(error, SupabaseHTTPError) else type(error).__name__}
