@@ -2,7 +2,6 @@
 # Node.js (web)
 # ======================
 web/node_modules/
-web/package-lock.json
 
 # Logs & generated files
 web/logs/*.json
@@ -69,6 +68,13 @@ Thumbs.db
 # Shared database offline bundles and exports
 /database/local/
 /database/backups/
+
+# Local database files and run artifacts from all pipelines
+*.db
+**/logs/
+
+# Scripts and manifests regenerated from each web experiment
+web/tests/generated/
 
 # Downloaded emulator app binaries
 /mobile/apps/*.apk

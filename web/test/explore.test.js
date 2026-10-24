@@ -1,5 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
+// Importing exploration helpers does not require a live API credential.
+process.env.GROQ_API_KEY ||= 'unit-test-placeholder';
 const {
   shouldCaptureScreenshot,
   selectRelevantSubFeatures,
