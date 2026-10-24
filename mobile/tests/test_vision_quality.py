@@ -78,8 +78,11 @@ class QualityTests(unittest.TestCase):
         self.assertEqual({case["category"] for case in cases},
                          {"valid", "invalid", "boundary", "cancellation", "persistence"})
 
-    def test_exploration_defers_uncontrolled_text_input(self):
+    def test_exploration_replaces_uncontrolled_input_with_replayable_synthetic_data(self):
         elements = [{"text": "Name", "editable": True, "clickable": True, "bbox": [0,0,10,10]},
                     {"text": "Open", "clickable": True, "bbox": [0,20,10,30]}]
         chosen = Coverage().choose("screen", {"action": "type", "element_index": 0, "value": "uncontrolled"}, elements)
-        self.assertNotEqual(chosen["action"], "type")
+        self.assertEqual(chosen["action"], "type")
+        self.assertEqual(chosen["input_fixture"], "text")
+        self.assertEqual(chosen["value"], "QA sample 42")
+        self.assertTrue(chosen["clear"])

@@ -114,8 +114,8 @@ created. Inspect `run_summary.json`, `vision_test_cases.json`, and
 `test_execution/vision_execution_report.json` under `mobile/logs/vision/<run>/`.
 A run with no replayable actions can legitimately generate no cases. Passing
 assertions in the execution report, rather than the final `Done` message, determine
-success. Some errors are caught during finalization, so terminal exit alone is not
-sufficient to certify success.
+success. Fatal exploration/finalization errors return nonzero. Terminal exit alone still
+does not certify that every test assertion passed; inspect the report.
 
 Then expand and enable database saving:
 
@@ -148,6 +148,12 @@ execution record means all generated cases received outcomes, not that all passe
 or the full exploration budget was completed.
 
 App relaunch resets navigation, not all data. Use an emulator with controlled
-fixtures. Automatic exploration restores supported checkable controls; input and
-radio scenarios need explicit requirement fixtures. Screenshots and replay
+fixtures. Automatic exploration restores supported checkable controls and uses
+named synthetic inputs. WDIO additionally receives budgeted functional workflows;
+real-app login and radio scenarios need explicit requirement fixtures. Screenshots and replay
 artifacts remain local rather than being uploaded with database JSON.
+
+See [the October 22 run review](vision/reviews/20261022_172453_558195Z.md) for
+subsequent fixes to app scope, loading assertions, duplicate behaviors, and stalled
+exploration. These fixes have local regression coverage; a fresh live comparison
+is still required.

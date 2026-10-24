@@ -72,3 +72,5 @@ Thumbs.db
 
 # Downloaded emulator app binaries
 /mobile/apps/*.apk
+# Local editor settings
+/.vscode/

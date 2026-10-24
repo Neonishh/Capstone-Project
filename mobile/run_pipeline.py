@@ -32,7 +32,7 @@ from src.test_generator import generate_test_cases
 from src.script_generator import generate_script
 from src.test_executor import execute_test_cases
 from src.report_generator import generate_report
-from src.database_storage import MobileRun, add_database_arguments
+from src.database_storage import MobileRun, add_database_arguments, read_exploration_metadata
 
 LOGS_DIR        = Path(__file__).parent / "logs"
 SCREENSHOTS_DIR = LOGS_DIR / "screenshots"
@@ -113,7 +113,8 @@ def main():
 
     # ── Stage 4: Execute test cases ───────────────────────────────────────────
     print("\n[pipeline] Stage 4: Executing test cases on device...")
-    session = MobileRun("A", args.app or APP_PACKAGE, args.comparison, memory_log, test_cases) if args.comparison else None
+    session = MobileRun("A", args.app or APP_PACKAGE, args.comparison, memory_log, test_cases,
+                        metadata=read_exploration_metadata(Path(args.log_path).parent, memory_log)) if args.comparison else None
     results = []
     driver = None
     finished = False

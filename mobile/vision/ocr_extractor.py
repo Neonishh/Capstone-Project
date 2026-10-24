@@ -18,6 +18,11 @@ Dependencies:
 
 from pathlib import Path
 from functools import lru_cache
+import os
+
+def needs_ocr(accessibility):
+    """Optional fast validation mode; normal vision runs retain full OCR by default."""
+    return os.environ.get("VISION_OCR_MODE", "always") != "fallback" or not accessibility
 
 
 @lru_cache(maxsize=4)

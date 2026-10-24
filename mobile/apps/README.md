@@ -16,6 +16,11 @@ and is not AI-generated. Source links are recorded in its report. These are pilo
 checks, not a completed coverage benchmark.
 
 Reports: `mobile/logs/vision/<run>/` and `mobile/logs/benchmarks/wdio_reference_<run>/`.
-The current generator redacts typed values and therefore stops generating replay
-paths when it encounters a typed step. Synthetic test-data fixtures must be added
-before claiming generated coverage of login or form-submission workflows.
+The explorer now automatically selects the WDIO functional profile, using named
+synthetic inputs and explicit assertions for Forms, login/sign-up, validation
+boundaries, cancellation, persistence, carousel/scrolling, and the drag puzzle.
+Completed workflows have `source.kind=app_profile`, distinct from observed/LLM-
+selected regressions. A 40-step budget runs a subset; partial workflows and
+unavailable targets are recorded in `behavior_review.json`. This demo shows
+login/sign-up success alerts, not a real authenticated home screen. Use
+`--behavior-profile off` for free exploration only. See [the vision guide](../vision/README.md).

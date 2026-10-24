@@ -122,15 +122,20 @@ def merge(
         if key in existing:
             existing_element = existing[key]
             existing_element.update({
+                "control_class": accessibility.get("control_class", ""),
+                "package": accessibility.get("package", ""),
                 "clickable": accessibility.get("clickable", False),
                 "checkable": accessibility.get("checkable", False),
                 "checked": accessibility.get("checked", False),
                 "editable": accessibility.get("editable", False),
                 "resource_id": accessibility.get("resource_id", ""),
+                **{key: accessibility.get(key) for key in ("accessibility_id", "hint", "value", "password", "input_type", "enabled", "focusable", "selected")},
             })
             continue
         elements.append({
             "type": accessibility.get("type", "accessibility"),
+            "control_class": accessibility.get("control_class", ""),
+            "package": accessibility.get("package", ""),
             "text": _safe_text(accessibility.get("text", "")),
             "bbox": accessibility.get("bbox"),
             "confidence": accessibility.get("confidence", 1.0),
@@ -139,6 +144,7 @@ def merge(
             "checked": accessibility.get("checked", False),
             "editable": accessibility.get("editable", False),
             "resource_id": accessibility.get("resource_id", ""),
+            **{key: accessibility.get(key) for key in ("accessibility_id", "hint", "value", "password", "input_type", "enabled", "focusable", "selected")},
         })
         existing[key] = elements[-1]
 

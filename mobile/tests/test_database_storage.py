@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from src.database_storage import MobileRun, normalize_results
+from src.database_storage import MobileRun, normalize_results, write_exploration_metadata, read_exploration_metadata
 from database.save_run import save_run_to_db
 
 
@@ -61,6 +61,31 @@ class MobileStorageTests(unittest.TestCase):
         self.assertEqual(a.run["comparison_id"], b.run["comparison_id"])
         self.assertNotEqual(a.run["run_id"], b.run["run_id"])
         self.assertEqual(a.run["test_cases"][0]["id"], "TC001")
+
+    def test_exploration_metadata_survives_completed_execution(self):
+        metadata = dict(model='recorded-model', exploration_complete=False, exploration_stop_reason='rate_limit')
+        session = MobileRun('B', 'settings', 'pair', [], [{'id': 'TC001'}], metadata=metadata)
+        with patch('src.database_storage.save_run_to_db', return_value={'file': 'test', 'uploaded': True}):
+            session.save([{'test_case': 'TC001', 'status': 'PASS'}], finished=True)
+        self.assertEqual(session.run['execution_state'], 'completed')
+        self.assertEqual(session.run['run_details']['llm']['model'], 'recorded-model')
+        self.assertIs(session.run['run_details']['exploration_complete'], False)
+        self.assertEqual(session.run['run_details']['stop_reason'], 'rate_limit')
+
+    def test_replay_metadata_matches_selected_history(self):
+        metadata = dict(model='original-model', exploration_complete=False, exploration_stop_reason='step_budget')
+        with tempfile.TemporaryDirectory() as directory:
+            memory = [{'step': 1}]
+            write_exploration_metadata(directory, memory, metadata)
+            self.assertEqual(read_exploration_metadata(directory, memory), metadata)
+            with self.assertRaisesRegex(ValueError, 'does not match'):
+                read_exploration_metadata(directory, [{'step': 2}])
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(read_exploration_metadata(directory, memory), {})
+
+    def test_result_attachments_are_preserved(self):
+        result = normalize_results([{'test_case': 'TC001', 'status': 'PASS', 'attachments': [{'path': 'local.png'}]}])[0]
+        self.assertEqual(result['attachments'], [{'path': 'local.png'}])
 
     def test_vision_executor_preserves_partial_results_on_crash(self):
         from vision.vision_test_executor import execute_all

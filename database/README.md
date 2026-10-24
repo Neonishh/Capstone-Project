@@ -146,3 +146,7 @@ Official references:
 - https://supabase.com/docs/guides/database/postgres/row-level-security
 - https://supabase.com/docs/reference/javascript/upsert
 - https://supabase.com/docs/guides/platform/billing-on-supabase
+
+
+See [shared run metadata](RUN_METADATA.md) for model/stop-reason fields, legacy NULLs,
+web/mobile completion semantics, and existing-project migration instructions.

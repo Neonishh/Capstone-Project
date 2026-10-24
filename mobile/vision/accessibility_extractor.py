@@ -42,6 +42,13 @@ def extract_accessibility(driver) -> list:
         checkable = node.get("checkable", "false").lower() == "true"
         checked = node.get("checked", "false").lower() == "true"
         editable = node.get("class", "").endswith("EditText") or node.get("editable", "false").lower() == "true"
+        if editable and not content_desc:
+            ancestor = parents.get(node)
+            while ancestor is not None:
+                if ancestor.get("content-desc"):
+                    content_desc = ancestor.get("content-desc")
+                    break
+                ancestor = parents.get(ancestor)
         label = text or content_desc
         bbox = _parse_bounds(node.get("bounds", ""))
         if not bbox:
@@ -53,10 +60,11 @@ def extract_accessibility(driver) -> list:
         target_checked = checked
         target_id = node.get("resource-id") or ""
         target_class = node.get("class", "")
+        target_accessibility_id = content_desc
 
         # A row's visible title is often a non-clickable child of a clickable
         # container. Point at the parent control while keeping the useful label.
-        if label and not (clickable or checkable):
+        if label and not (clickable or checkable or editable):
             ancestor = parents.get(node)
             while ancestor is not None:
                 if (ancestor.get("clickable", "false").lower() == "true" or
@@ -69,15 +77,19 @@ def extract_accessibility(driver) -> list:
                         target_checked = ancestor.get("checked", "false").lower() == "true"
                         target_id = ancestor.get("resource-id") or target_id
                         target_class = ancestor.get("class", target_class)
+                        target_accessibility_id = ancestor.get("content-desc") or target_accessibility_id
                     break
                 ancestor = parents.get(ancestor)
 
-        if not (label or target_clickable or target_checkable):
+        if not (label or target_clickable or target_checkable or editable):
             continue
 
+        descendant_values = ["[REDACTED]" if child.get("password") == "true" else child.get("text", "") for child in node.iter()
+                             if child is not node and child.get("class", "").endswith("EditText")]
         raw_nodes.append({
             "node": node,
             "control_class": target_class,
+            "package": node.get("package", ""),
             "label": label,
             "bbox": target_bbox,
             "clickable": target_clickable,
@@ -85,6 +97,14 @@ def extract_accessibility(driver) -> list:
             "checked": target_checked,
             "editable": editable,
             "resource_id": target_id,
+            "accessibility_id": target_accessibility_id,
+            "hint": node.get("hint", ""),
+            "value": "[REDACTED]" if node.get("password") == "true" else (descendant_values[0] if len(descendant_values) == 1 and not editable else text),
+            "password": node.get("password") == "true",
+            "input_type": node.get("input-type", ""),
+            "enabled": node.get("enabled", "true") == "true",
+            "focusable": node.get("focusable", "true") == "true",
+            "selected": node.get("selected") == "true",
         })
 
     elements = []
@@ -94,7 +114,7 @@ def extract_accessibility(driver) -> list:
     ]
     for item in raw_nodes:
         label = item["label"]
-        if label and not (item["clickable"] or item["checkable"]):
+        if label and not (item["clickable"] or item["checkable"] or item["editable"]):
             center_x = (item["bbox"][0] + item["bbox"][2]) / 2
             center_y = (item["bbox"][1] + item["bbox"][3]) / 2
             containing = [
@@ -129,7 +149,8 @@ def extract_accessibility(driver) -> list:
         if key in seen:
             continue
         seen.add(key)
-        safe_label = label[:200]
+        # Text input content changes; content-desc/test ID is a stable locator.
+        safe_label = (item["accessibility_id"] or item["hint"] or target_id or "Text input")[:200] if item["editable"] else label[:200]
         if safe_label and (
             "password" in target_id.casefold()
             or set(safe_label) <= {"•", "*"}
@@ -138,6 +159,7 @@ def extract_accessibility(driver) -> list:
         elements.append({
             "type": "accessibility",
             "control_class": item["control_class"],
+            "package": item["package"],
             "text": safe_label,
             "bbox": target_bbox,
             "confidence": 1.0,
@@ -146,6 +168,7 @@ def extract_accessibility(driver) -> list:
             "checked": target_checked,
             "editable": item["editable"],
             "resource_id": target_id,
+            **{key: item[key] for key in ("accessibility_id", "hint", "value", "password", "input_type", "enabled", "focusable", "selected")},
             "is_title": any(token in target_id.casefold() for token in (
                 "collapsing_toolbar", "alerttitle", "dialog_title"
             )),

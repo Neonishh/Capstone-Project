@@ -55,3 +55,7 @@ python -m unittest discover -s database -p test_storage.py -v
 The shared files were copied from `origin/main` while staying on
 `mobile-exploration`. No branches were merged. When main is merged later, these
 files should match unless the team changes the shared database implementation.
+
+
+See [shared run metadata](../database/RUN_METADATA.md) for model/stop-reason fields, legacy NULLs,
+web/mobile completion semantics, and existing-project migration instructions.

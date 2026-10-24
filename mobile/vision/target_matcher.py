@@ -55,12 +55,20 @@ def resolve_target(target, elements, screen_size, action):
     target = target if isinstance(target, dict) else {"text": str(target or "")}
     expected_text = target.get("text") or target.get("target_text") or ""
     expected_resource_id = str(target.get("resource_id") or "").strip()
+    expected_accessibility_id = target.get("accessibility_id")
     expected_type = target.get("type") or ""
     expected_pos = target.get("norm_center")
     width, height = screen_size
 
     candidates = []
+    physical_targets = set()
     for element in elements:
+        if expected_accessibility_id and element.get("accessibility_id") != expected_accessibility_id:
+            continue
+        if target.get("hint") and element.get("hint") != target["hint"]:
+            continue
+        if "editable" in target and element.get("editable") != target["editable"]:
+            continue
         bbox = element.get("bbox")
         if not isinstance(bbox, (list, tuple)) or len(bbox) != 4:
             continue
@@ -68,8 +76,13 @@ def resolve_target(target, elements, screen_size, action):
             element.get("editable")
         ):
             continue
-        if action == "tap" and not (element.get("clickable") or element.get("checkable")):
+        if action == "tap" and not (element.get("clickable") or element.get("checkable") or element.get("editable")):
             continue
+        if element.get("accessibility_id"):
+            physical = (element["accessibility_id"], tuple(bbox), bool(element.get("editable")))
+            if physical in physical_targets:
+                continue
+            physical_targets.add(physical)
 
         text_score = _text_score(expected_text, element.get("text"))
         resource_id_match = bool(
@@ -87,7 +100,9 @@ def resolve_target(target, elements, screen_size, action):
             except (TypeError, ValueError, IndexError):
                 position_score = 0.0
 
-        if resource_id_match:
+        if expected_accessibility_id or target.get("hint"):
+            score, acceptable = 2.0 + position_score * 0.12, True
+        elif resource_id_match:
             score = 1.0 + 0.4 * text_score + 0.12 * position_score
             acceptable = not expected_text or text_score >= 0.72
         elif expected_text:
@@ -111,7 +126,7 @@ def resolve_target(target, elements, screen_size, action):
             "candidate_count": len(candidates),
         }
 
-    method = "resource_id_exact" if expected_resource_id and best[3].get("resource_id") == expected_resource_id else (
+    method = "accessibility_id_exact" if expected_accessibility_id else "resource_id_exact" if expected_resource_id and best[3].get("resource_id") == expected_resource_id else (
         "text_exact" if best[1] >= 0.99 else (
         "fuzzy_text" if expected_text and best[1] >= 0.72 else "type_and_position"
         )

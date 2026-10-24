@@ -37,16 +37,18 @@ except ImportError:
 
 from vision.screenshot_capture import capture_screenshot
 from vision.yolo_detector import detect_ui_components
-from vision.ocr_extractor import extract_text
+from vision.ocr_extractor import extract_text, needs_ocr
 from vision.vision_merger import merge
 from vision.llm_reasoner import decide_next_action
 from vision.accessibility_extractor import extract_accessibility
 from vision.coordinate_mapper import map_bbox_center, annotate_tap
 from vision.action_verification import verify_action
 from vision.test_case_generator import generate_test_cases, write_run_summary
-from src.database_storage import MobileRun, add_database_arguments
+from src.database_storage import MobileRun, add_database_arguments, write_exploration_metadata
 from vision.app_state import launch_start
-from vision.quality import Coverage, screen_key, requirement_cases
+from vision.quality import Coverage, screen_key, requirement_cases, wait_for_screen, exploration_target, input_target
+from vision.behavior_planner import BehaviorPlanner
+from vision.oracles import check_oracle
 
 MAX_STEPS   = 30
 APPIUM_HOST = os.environ.get("APPIUM_HOST", "localhost")
@@ -79,11 +81,13 @@ def build_driver(app_package: str, app_activity: str):
     options.auto_grant_permissions = True
     options.new_command_timeout    = 300
     options.set_capability("appium:adbExecTimeout", 60000)
+    options.set_capability("appium:uiautomator2ServerReadTimeout", 30000)
     options.app_wait_activity      = "*"
 
     appium_url = f"http://{APPIUM_HOST}:{APPIUM_PORT}"
     print(f"[explore_vision] Connecting to Appium at {appium_url}...")
     driver = webdriver.Remote(appium_url, options=options)
+    driver.update_settings({"waitForIdleTimeout": 1000, "waitForSelectorTimeout": 3000})
     print("[explore_vision] Connected.")
     return driver
 
@@ -103,13 +107,19 @@ def execute_action(driver, action: dict) -> dict:
     if action_type == "done":
         return {"status": "not_needed"}
 
+    if action_type == "relaunch":
+        launch_start(driver, action["app_package"], action["app_activity"])
+        return {"status": "executed", "method": "relaunch"}
+    if action_type == "observe":
+        return {"status": "executed", "method": "observe"}
+
     if action_type == "back":
         driver.back()
         time.sleep(0.5)
         return {"status": "executed", "method": "back"}
 
     if action_type == "swipe":
-        _do_swipe(driver)
+        _do_swipe(driver, action.get("direction", "up"), action.get("swipe_region"), action.get("duration_ms", 500))
         return {"status": "executed", "method": "swipe"}
 
     bbox = action.get("bbox")
@@ -130,6 +140,11 @@ def execute_action(driver, action: dict) -> dict:
     if action_type == "tap":
         driver.tap([(cx, cy)])
 
+    elif action_type == "drag":
+        destination = map_bbox_center(driver, screenshot_path, action["destination_bbox"])["device_point"]
+        driver.execute_script("mobile: dragGesture", {"startX": cx, "startY": cy,
+                              "endX": destination[0], "endY": destination[1], "speed": 500})
+
     elif action_type == "type":
         driver.tap([(cx, cy)])
         time.sleep(0.3)
@@ -137,7 +152,13 @@ def execute_action(driver, action: dict) -> dict:
         if action.get("clear"):
             driver.switch_to.active_element.clear()
         if value:
-            driver.execute_script("mobile: type", {"text": value})
+            driver.switch_to.active_element.send_keys(value)
+        if action.get("hide_keyboard", True):
+            try:
+                if driver.is_keyboard_shown():
+                    driver.hide_keyboard()
+            except Exception:
+                pass
     else:
         return {"status": "skipped", "reason": f"unsupported_action:{action_type}"}
 
@@ -147,7 +168,7 @@ def execute_action(driver, action: dict) -> dict:
         bbox,
         (shot_x, shot_y),
         f"{action_type}: {action.get('target', '')}",
-        debug_dir / f"step_{action.get('_step', 'unknown'):02d}_tap.png",
+        debug_dir / f"step_{int(action.get('_step', 0)):02d}_tap.png",
     )
     if geometry["aspect_ratio_mismatch"]:
         print("[explore_vision] WARNING screenshot/tap-space aspect ratios differ; inspect the debug tap overlay")
@@ -243,14 +264,23 @@ def _fallback_action(screen_data: dict, history: list) -> dict:
     }
 
 
-def _do_swipe(driver) -> None:
+def _do_swipe(driver, direction="up", region=None, duration=500) -> None:
     size = driver.get_window_size()
     w, h = size["width"], size["height"]
-    driver.swipe(
-        start_x=w // 2, start_y=int(h * 0.7),
-        end_x=w // 2,   end_y=int(h * 0.3),
-        duration=500,
-    )
+    gestures = {"up": (.5,.7,.5,.3), "down": (.5,.3,.5,.7),
+                "left": (.85,.5,.15,.5), "right": (.15,.5,.85,.5)}
+    if direction not in gestures:
+        raise ValueError("Unsupported swipe direction")
+    x1,y1,x2,y2 = gestures[direction]
+    if region is not None:
+        if len(region) != 4 or not all(isinstance(v, (int,float)) and 0 <= v <= 1 for v in region):
+            raise ValueError("Swipe region must contain normalized x, y, width and height")
+        left,top,width,height = region
+        if width <= 0 or height <= 0 or left+width > 1 or top+height > 1:
+            raise ValueError("Swipe region extends outside the viewport")
+        x1,x2 = left + width*x1, left + width*x2
+        y1,y2 = top + height*y1, top + height*y2
+    driver.swipe(int(w*x1), int(h*y1), int(w*x2), int(h*y2), duration=max(150, min(1500, int(duration))))
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
@@ -264,13 +294,33 @@ def main():
         help="Replay generated cases and save the execution report in this run folder.",
     )
     parser.add_argument("--max-steps", type=int, default=MAX_STEPS)
+    parser.add_argument("--allow-package", action="append", default=[], help="Additional Android package allowed during exploration")
     parser.add_argument("--requirements", help="JSON requirement scenarios with explicit oracles")
+    parser.add_argument("--behavior-profile", choices=["auto", "off"], default="auto",
+                        help="Exercise known app functional workflows before free exploration (default: auto)")
+    parser.add_argument("--profile-only", action="store_true",
+                        help="Stop after the available functional profile; do not make model requests")
     add_database_arguments(parser)
     args = parser.parse_args()
     if args.max_steps < 1:
         parser.error("--max-steps must be positive")
     specified_cases = requirement_cases(args.requirements) if args.requirements else []
     coverage = Coverage()
+    behavior = BehaviorPlanner(args.app_package, args.app_activity, args.behavior_profile == "auto")
+    if args.profile_only and not behavior.pending:
+        parser.error("--profile-only requires an available app behavior profile")
+    exploration_policy = "functional_profile_then_model" if behavior.pending else "model_with_controlled_inputs"
+    fixture_state = {}
+    model_calls = 0
+    free_exploration_started = False
+    allowed_packages = {args.app_package, *args.allow_package}
+    # Pixel/Google Settings delegates its built-in search to this companion app.
+    if args.app_package == "com.android.settings":
+        allowed_packages.add("com.google.android.settings.intelligence")
+    exploration_error = None
+    finalization_error = None
+    exploration_stop_reason = "step_budget"
+    exploration_complete = False
 
     if os.environ.get("LLM_PROVIDER", "ollama").lower() == "gemini":
         from src.gemini_client import generate
@@ -298,12 +348,39 @@ def main():
         (VISION_DIR / "run_config.json").write_text(json.dumps({
             "app_package": args.app_package, "app_activity": args.app_activity,
             "provider": os.environ.get("LLM_PROVIDER", "ollama"),
-            "model": os.environ.get("GEMINI_MODEL") if os.environ.get("LLM_PROVIDER") == "gemini" else None,
+            "model": {
+                "gemini": os.environ.get("GEMINI_MODEL", "gemini-2.5-flash"),
+                "openai": os.environ.get("OPENAI_MODEL", "gpt-4o-mini"),
+                "groq": os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile"),
+                "ollama": os.environ.get("OLLAMA_MODEL", "llama3.1"),
+            }.get(os.environ.get("LLM_PROVIDER", "ollama").lower()),
+            "max_steps": args.max_steps, "allowed_packages": sorted(allowed_packages),
+            "behavior_profile": args.behavior_profile,
+            "profile_only": args.profile_only,
+            "exploration_policy": exploration_policy,
         }, indent=2), encoding="utf-8")
         for step in range(1, args.max_steps + 1):
+            if args.profile_only and not behavior.active and not behavior.pending:
+                exploration_stop_reason = "functional_profile_complete"
+                break
             print(f"\n======== Vision Step {step} / {args.max_steps} ========")
 
             # ── Module 1: Screenshot ──────────────────────────────────────
+            accessibility_results, before_settle = wait_for_screen(driver, extract_accessibility)
+            current_screen_key = screen_key(accessibility_results, driver.current_activity)
+            recovery_reason = coverage.recovery(current_screen_key, driver.current_package, allowed_packages)
+            if (behavior.active or behavior.pending) and recovery_reason in {"three_actions_without_progress", "screen_visit_budget_exhausted"}:
+                recovery_reason = None  # Multi-field workflows have their own bounded step/target budget.
+            if not before_settle["settled"]:
+                recovery_reason = recovery_reason or "screen_did_not_settle"
+            if recovery_reason:
+                exploration_history.append({"step": step, "action": "restart", "reason": recovery_reason,
+                                            "package_before": driver.current_package})
+                print(f"[explore_vision] Recovery: {recovery_reason}; returning to start")
+                launch_start(driver, args.app_package, args.app_activity)
+                fixture_state.clear()
+                coverage.recovered(current_screen_key)
+                continue
             screenshot_path = capture_screenshot(driver, str(SCREENSHOTS_DIR), step)
 
             # ── Module 2: YOLO ────────────────────────────────────────────
@@ -315,20 +392,11 @@ def main():
 
             # ── Module 3: OCR ─────────────────────────────────────────────
             try:
-                ocr_results = extract_text(screenshot_path)
+                ocr_results = extract_text(screenshot_path) if needs_ocr(accessibility_results) else []
             except Exception as e:
                 print(f"[explore_vision] OCR failed: {e}")
                 ocr_results = []
 
-            # Appium's hierarchy supplies exact labels and bounds even when
-            # OCR is unavailable and YOLO has no UI-trained detections.
-            try:
-                accessibility_results = extract_accessibility(driver)
-            except Exception as e:
-                print(f"[explore_vision] Accessibility extraction failed: {e}")
-                accessibility_results = []
-
-            # ── Module 4: Merge ───────────────────────────────────────────
             screen_data = merge(
                 step=step,
                 screenshot_path=screenshot_path,
@@ -341,7 +409,21 @@ def main():
             # ── Module 5: LLM decides next action ─────────────────────────
             try:
                 screen_data["coverage_screen_key"] = screen_key(accessibility_results, driver.current_activity)
-                action = decide_next_action(screen_data, exploration_history)
+                size = driver.get_window_size()
+                action = behavior.next_action(screen_data.get("elements", []), (size["width"], size["height"]))
+                if action is None:
+                    if behavior.completed and not free_exploration_started:
+                        launch_start(driver, args.app_package, args.app_activity)
+                        fixture_state.clear()
+                        exploration_history.append({"step": step, "action": "restart", "reason": "begin_free_exploration"})
+                        free_exploration_started = True
+                        continue
+                    model_screen = dict(screen_data)
+                    model_screen["elements"] = [dict(el, clickable=False, checkable=False, editable=False)
+                        if not (exploration_target(el, driver.current_package) or input_target(el, driver.current_package)) else el
+                        for el in screen_data.get("elements", [])]
+                    model_calls += 1
+                    action = decide_next_action(model_screen, exploration_history)
             except Exception as e:
                 print(f"[explore_vision] LLM failed: {e}")
                 (VISION_DIR / "llm_error.json").write_text(json.dumps({
@@ -350,11 +432,18 @@ def main():
                 raise RuntimeError("Exploration stopped after LLM failure; no fallback tests generated") from e
 
             current_screen_key = screen_key(accessibility_results, driver.current_activity)
-            action = coverage.choose(current_screen_key, action, screen_data.get("elements", []))
+            if action.get("_behavior_id"):
+                coverage.visit(current_screen_key, action, screen_data.get("elements", []))
+            else:
+                action = coverage.choose(current_screen_key, action, screen_data.get("elements", []), driver.current_package)
 
             log_entry = {
                 "step":       step,
                 "screen_key": current_screen_key,
+                "state_key": current_screen_key + json.dumps(fixture_state, sort_keys=True),
+                "activity_before": driver.current_activity,
+                "package_before": driver.current_package,
+                "settle_before": before_settle,
                 "screen":     screen_data.get("screen", "unknown"),
                 "screenshot": screenshot_path,
                 "action":     action.get("action"),
@@ -366,7 +455,14 @@ def main():
                 "elements_detected": len(screen_data.get("elements", [])),
                 "detection_counts": screen_data.get("detection_counts", {}),
                 "execution": {"status": "not_executed"},
+                "decision_source": "app_profile" if action.get("_behavior_id") else "model_with_controller",
             }
+            if action.get("input_fixture"):
+                log_entry.update(input_fixture=action["input_fixture"], clear=True)
+            if action.get("_behavior_id"):
+                log_entry["behavior_id"] = action["_behavior_id"]
+            if action.get("direction"):
+                log_entry["direction"] = action["direction"]
             action_index = action.get("element_index")
             selected = (
                 screen_data["elements"][action_index]
@@ -389,6 +485,8 @@ def main():
                 log_entry["target_control"] = {
                     "text": selected.get("text", ""),
                     "resource_id": selected.get("resource_id", ""),
+                    "accessibility_id": selected.get("accessibility_id", ""),
+                    "password": bool(selected.get("password")),
                     "clickable": bool(selected.get("clickable")),
                     "checkable": bool(selected.get("checkable")),
                     "checked_before": bool(selected.get("checked")),
@@ -403,6 +501,8 @@ def main():
 
             # ── Stop if LLM says done ──────────────────────────────────────
             if action.get("action") == "done":
+                exploration_stop_reason = "agent_done"
+                exploration_complete = True
                 print("[explore_vision] LLM returned 'done' — stopping early")
                 break
 
@@ -414,12 +514,15 @@ def main():
                     action["_debug_dir"] = str(DEBUG_DIR)
                     action["_step"] = step
                     execution = execute_action(driver, action)
-                    time.sleep(1.5)   # let screen settle
-                    screenshot_after = capture_screenshot(
-                        driver, str(SCREENSHOTS_DIR), step, suffix="after"
-                    )
-                    after_accessibility = extract_accessibility(driver)
+                    if action.get("action") == "relaunch":
+                        fixture_state.clear()
+                    elif action.get("input_fixture") and selected:
+                        identity = selected.get("accessibility_id") or selected.get("resource_id") or selected.get("text", "")
+                        fixture_state[identity] = action["input_fixture"]
+                    after_accessibility, settle = wait_for_screen(driver, extract_accessibility)
                     activity_after = driver.current_activity
+                    package_after = driver.current_package
+                    screenshot_after = capture_screenshot(driver, str(SCREENSHOTS_DIR), step, suffix="after")
                     after_states = _checkable_states(after_accessibility)
                     changed_states = {
                         key: {"before": before_states.get(key), "after": after_states.get(key)}
@@ -450,8 +553,12 @@ def main():
                         "verification": verification,
                         "effect_detected": verification.get("changed", False),
                         "activity_after": activity_after,
+                        "package_after": package_after,
+                        "in_scope": package_after in allowed_packages,
+                        "settle": settle,
                         "screen_key_after": screen_key(after_accessibility, activity_after),
-                        "controls_after": [{k: el.get(k) for k in ("text", "resource_id", "checked", "checkable")} for el in after_accessibility],
+                        "state_key_after": screen_key(after_accessibility, activity_after) + json.dumps(fixture_state, sort_keys=True),
+                        "controls_after": [{k: el.get(k) for k in ("text", "resource_id", "accessibility_id", "hint", "value", "password", "checked", "checkable", "editable", "package", "control_class")} for el in after_accessibility],
                         "destination_titles": [el["text"] for el in after_accessibility
                                                if el.get("is_title") and el.get("text")],
                         "selected_value_after": (
@@ -464,7 +571,13 @@ def main():
                                                       and not str(el.get("resource_id", "")).endswith("/summary")}),
                     })
                     log_entry["execution"] = execution
-                    if selected and selected.get("checkable") and execution.get("status") == "executed":
+                    assertion = None
+                    if behavior.final_step(action):
+                        ok, detail = check_oracle(behavior.active, {}, after_accessibility, verification, activity_after)
+                        assertion = {"ok": ok, **detail}
+                        execution["behavior_assertion"] = assertion
+                    behavior.record(action, execution, step, assertion)
+                    if selected and selected.get("checkable") and execution.get("status") == "executed" and not action.get("_behavior_id"):
                         from vision.target_matcher import resolve_target
                         from PIL import Image
                         with Image.open(screenshot_after) as image:
@@ -485,13 +598,27 @@ def main():
                         execution["exploration_cleanup"] = "restored"
                         launch_start(driver, args.app_package, args.app_activity)
                         exploration_history.append({"action": "restart", "step": step, "reason": "fixture_restored"})
+                    coverage.record(bool(action.get("input_fixture")) or bool(verification.get("checkable_state_changes")) or
+                                    log_entry["screen_key"] != execution["screen_key_after"])
                 except Exception as e:
                     print(f"[explore_vision] Execute failed: {e} — continuing")
+                    coverage.record(False)
                     log_entry["execution"] = {"status": "error", "error": str(e)}
-                    if selected and selected.get("checkable"):
+                    behavior.record(action, log_entry["execution"], step)
+                    if selected and selected.get("checkable") and not action.get("_behavior_id"):
+                        exploration_error = "Checkable cleanup or execution failed: " + str(e)
+                        exploration_stop_reason = "execution_error"
                         break
 
+    except KeyboardInterrupt:
+        exploration_error = "Run cancelled by user"
+        exploration_stop_reason = "cancelled"
+        exploration_complete = False
+        args.execute_generated = False
     except Exception as fatal:
+        exploration_error = str(fatal)
+        exploration_stop_reason = "rate_limit" if "429" in str(fatal.__cause__ or fatal) else "error"
+        exploration_complete = False
         print(f"\n[explore_vision] FATAL: {fatal}")
         import traceback
         traceback.print_exc()
@@ -511,17 +638,30 @@ def main():
                 VISION_DIR / "vision_test_cases.json",
                 run_id=RUN_ID,
             )
+            cases.extend(behavior.completed)
             cases.extend(specified_cases)
+            (VISION_DIR / "behavior_review.json").write_text(json.dumps(behavior.summary(), indent=2), encoding="utf-8")
             (VISION_DIR / "coverage.json").write_text(json.dumps(coverage.summary(), indent=2), encoding="utf-8")
             print(f"[explore_vision] Generated {len(cases)} test case(s) → {cases_path}")
             for case in cases:
                 case.setdefault("preconditions", {"app_package": args.app_package, "app_activity": args.app_activity})
             Path(cases_path).write_text(json.dumps(cases, indent=2), encoding="utf-8")
 
+            config = json.loads((VISION_DIR / "run_config.json").read_text(encoding="utf-8")) if (VISION_DIR / "run_config.json").is_file() else {}
+            config["llm_calls"] = model_calls
+            (VISION_DIR / "run_config.json").write_text(json.dumps(config, indent=2), encoding="utf-8")
+            metadata = write_exploration_metadata(VISION_DIR, exploration_history, {
+                "model": config.get("model"), "exploration_stop_reason": exploration_stop_reason,
+                "exploration_complete": exploration_complete,
+            })
             session = None
             if args.comparison:
                 session = MobileRun("B", args.app or args.app_package, args.comparison,
-                                    exploration_history, cases)
+                                    exploration_history, cases, metadata=metadata)
+                session.run.setdefault("run_details", {})["exploration"] = {
+                    "policy": exploration_policy, "behavior_profile": args.behavior_profile,
+                    "functional_scenarios": behavior.summary(), "coverage": coverage.summary()}
+                session.run["run_details"].setdefault("llm", {})["calls"] = model_calls
                 session.save([])
 
             if args.execute_generated:
@@ -536,8 +676,19 @@ def main():
                     app_activity=args.app_activity,
                 )
 
-            write_run_summary(VISION_DIR, exploration_history, cases, execution_report)
+            summary = write_run_summary(VISION_DIR, exploration_history, cases, execution_report)
+            summary["functional_exploration"] = behavior.summary()
+            summary["llm_calls"] = model_calls
+            summary["exploration_policy"] = exploration_policy
+            summary.update({k: metadata[k] for k in ("model", "exploration_stop_reason", "exploration_complete")})
+            summary["exploration_error"] = exploration_error
+            summary["exploration_completed_budget"] = bool(exploration_history and exploration_history[-1].get("step") == args.max_steps and not exploration_error)
+            summary["exploration_status"] = "failed" if exploration_error else "profile_completed" if exploration_stop_reason == "functional_profile_complete" else (
+                "budget_completed" if summary["exploration_completed_budget"] else "stopped_early")
+            summary["coverage"] = coverage.summary()
+            (VISION_DIR / "run_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
         except Exception as e:
+            finalization_error = str(e)
             print(f"[explore_vision] Test generation/execution finalization failed: {e}")
         finally:
             driver.quit()
@@ -546,6 +697,8 @@ def main():
         print(f"  JSON files  : {JSON_DIR}/")
         print(f"  Memory log  : {MEMORY_LOG_PATH}")
 
+    return 1 if exploration_error or finalization_error else 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

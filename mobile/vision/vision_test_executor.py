@@ -15,17 +15,19 @@ sys.path.insert(0, str(MOBILE_DIR))
 from vision import explore_vision as runner  # noqa: E402
 from vision.action_verification import verify_action  # noqa: E402
 from vision.coordinate_mapper import map_bbox_center  # noqa: E402
-from vision.ocr_extractor import extract_text  # noqa: E402
+from vision.ocr_extractor import extract_text, needs_ocr  # noqa: E402
 from vision.screenshot_capture import capture_screenshot  # noqa: E402
 from vision.target_matcher import resolve_target  # noqa: E402
 from vision.vision_merger import merge  # noqa: E402
 from vision.yolo_detector import detect_ui_components  # noqa: E402
 from vision.accessibility_extractor import extract_accessibility  # noqa: E402
-from src.database_storage import MobileRun, add_database_arguments  # noqa: E402
+from src.database_storage import MobileRun, add_database_arguments, read_exploration_metadata  # noqa: E402
 from vision.app_state import launch_start
+from vision.quality import wait_for_screen
 
 
 def _observe(driver, case_dir, step, suffix):
+    accessibility, settle = wait_for_screen(driver, extract_accessibility)
     screenshot_path = capture_screenshot(driver, str(case_dir / "screenshots"), step, suffix=suffix)
     try:
         yolo = detect_ui_components(screenshot_path)
@@ -33,16 +35,10 @@ def _observe(driver, case_dir, step, suffix):
         print(f"[vision_test_executor] YOLO failed: {exc}")
         yolo = []
     try:
-        ocr = extract_text(screenshot_path)
+        ocr = extract_text(screenshot_path) if needs_ocr(accessibility) else []
     except Exception as exc:
         print(f"[vision_test_executor] OCR failed: {exc}")
         ocr = []
-    try:
-        accessibility = extract_accessibility(driver)
-    except Exception as exc:
-        print(f"[vision_test_executor] Accessibility extraction failed: {exc}")
-        accessibility = []
-
     data = merge(
         step=step,
         screenshot_path=screenshot_path,
@@ -51,6 +47,7 @@ def _observe(driver, case_dir, step, suffix):
         output_dir=str(case_dir / "json"),
         accessibility_results=accessibility,
     )
+    data["settle"] = settle
     with Image.open(screenshot_path) as image:
         size = image.size
     return screenshot_path, data, accessibility, size
@@ -65,48 +62,8 @@ def _normalise_action(action):
     return action
 
 
-def _check_oracle(test, screen_data, accessibility, last_verification, activity=None):
-    oracle = test.get("verification") or {}
-    oracle_type = oracle.get("type")
-    if oracle_type == "control_state":
-        target = oracle.get("target") or {}
-        matches = [el for el in accessibility
-                   if el.get("checkable")
-                   and (not target.get("resource_id") or el.get("resource_id") == target["resource_id"])
-                   and (not target.get("text") or el.get("text") == target["text"])]
-        ok = bool(target.get("text") or target.get("resource_id")) and len(matches) == 1 and isinstance(oracle.get("checked"), bool) and matches[0].get("checked") == oracle["checked"]
-        return ok, {"type": oracle_type, "expected": oracle, "matches": matches}
-    if oracle_type == "all":
-        checks = [_check_oracle({"verification": child}, screen_data, accessibility, last_verification, activity)
-                  for child in oracle.get("conditions", [])]
-        return bool(checks) and all(ok for ok, _ in checks), {"type": "all", "checks": [detail for _, detail in checks]}
-    if oracle_type == "postcondition":
-        visible = {" ".join(str(item.get("text", "")).casefold().split()) for item in accessibility}
-        missing = [text for text in oracle.get("texts", [])
-                   if " ".join(text.casefold().split()) not in visible]
-        activity_ok = not oracle.get("activity") or oracle["activity"] == activity
-        ok = bool(oracle.get("texts")) and not missing and activity_ok
-        return ok, {"type": oracle_type, "missing_texts": missing,
-                    "expected_activity": oracle.get("activity"), "actual_activity": activity}
-    if oracle_type == "text_visible":
-        expected = oracle.get("texts") or []
-        visible = [item.get("text", "") for item in accessibility if item.get("text")]
-        matched = next((
-            wanted for wanted in expected
-            if any(wanted.casefold() in found.casefold() or found.casefold() in wanted.casefold()
-                   for found in visible if wanted and found)
-        ), None)
-        return bool(matched), {"type": oracle_type, "matched_text": matched, "expected": expected}
-    if oracle_type == "activity_changed":
-        ok = bool(last_verification and "activity_changed" in last_verification.get("evidence", []))
-        return ok, {"type": oracle_type, "ok": ok}
-    if oracle_type == "screen_changed":
-        ok = bool(last_verification and (
-            last_verification.get("screen_title_changed")
-            or last_verification.get("activity_changed")
-        ))
-        return ok, {"type": oracle_type, "ok": ok}
-    return False, {"type": "unsupported_or_missing_oracle", "ok": False}
+from vision.oracles import check_oracle as _check_oracle
+from vision.input_data import read_step_value
 
 
 def execute_test(driver, test, run_dir, test_index, app_package, app_activity=None, _phase=False):
@@ -150,13 +107,15 @@ def execute_test(driver, test, run_dir, test_index, app_package, app_activity=No
             if not target_data.get("resource_id") and step.get("resource_id"):
                 target_data["resource_id"] = step["resource_id"]
 
-            action = {"action": action_name, "value": step.get("value", ""),
+            action = {"action": action_name, "value": read_step_value(step),
+                      "direction": step.get("direction", "up"),
+                      "swipe_region": step.get("swipe_region"), "duration_ms": step.get("duration_ms", 500),
                       "target": target_data.get("text") or target_data.get("resource_id", ""),
-                      "clear": bool(step.get("clear")),
+                      "clear": bool(step.get("clear")), "hide_keyboard": step.get("hide_keyboard", True),
                       "_screenshot_path": before_path,
                       "_debug_dir": str(case_dir / "debug"), "_step": index}
 
-            if action_name in ("tap", "type", "set_checked"):
+            if action_name in ("tap", "type", "set_checked", "drag"):
                 element, resolution = resolve_target(target_data, screen_data.get("elements", []),
                                                      image_size, "tap" if action_name == "set_checked" else action_name)
                 step_result["target_resolution"] = resolution
@@ -171,6 +130,11 @@ def execute_test(driver, test, run_dir, test_index, app_package, app_activity=No
                     action["action"] = "tap"
                 action["bbox"] = element["bbox"]
                 action["target"] = element.get("text") or action["target"]
+                if action_name == "drag":
+                    destination, _ = resolve_target(step.get("destination") or {}, screen_data.get("elements", []), image_size, "observe")
+                    if destination is None:
+                        raise RuntimeError("Could not uniquely resolve live drag destination")
+                    action["destination_bbox"] = destination["bbox"]
 
             before_screen = screen_data.get("screen", "unknown")
             try:
@@ -211,11 +175,14 @@ def execute_test(driver, test, run_dir, test_index, app_package, app_activity=No
                 after_path, after_data, after_accessibility, after_size
             )
 
+        if screen_data.get("settle", {}).get("settled") is False:
+            raise RuntimeError("Destination did not settle before assertion deadline")
         oracle_ok, oracle_detail = _check_oracle(test, screen_data, accessibility, last_verification,
                                                driver.current_activity)
         result["oracle"] = {**oracle_detail, "ok": oracle_ok}
         if _phase:
             oracle_ok = True
+            result["oracle"] = {"type": "cleanup_actions_completed", "ok": True}
         if not oracle_ok:
             result["status"] = "FAIL"
             result["error"] = "Final expected-result check was not satisfied"
@@ -294,7 +261,8 @@ def main():
         if not memory_path.is_file():
             raise ValueError("Database saving requires vision_memory_log.json beside the case file")
         memory = json.loads(memory_path.read_text(encoding="utf-8"))
-        session = MobileRun("B", args.app or args.app_package, args.comparison, memory, tests)
+        session = MobileRun("B", args.app or args.app_package, args.comparison, memory, tests,
+                            metadata=read_exploration_metadata(cases_path.parent, memory))
         session.save([])
     driver = runner.build_driver(args.app_package, args.app_activity)
     try:

@@ -117,6 +117,7 @@ def _build_prompt(screen_data: dict, history: list) -> str:
             "interactive": bool(el.get("clickable") or el.get("checkable")),
             "editable": bool(el.get("editable")),
         }
+        entry.update({k: el[k] for k in ("accessibility_id", "hint", "password") if el.get(k)})
         if el.get("text"):
             entry["text"] = el["text"]
         entry["bbox"] = el.get("bbox")
@@ -159,10 +160,12 @@ ALREADY TRIED TARGETS (do NOT repeat these):
 RULES:
 1. Tap only an element whose interactive field is true. Use its element_index.
 2. Never tap plain text/title elements or guess a target absent from the list.
-3. For "type", choose only an element whose editable field is true.
+3. For "type", choose only an element whose editable field is true. Fill empty fields before submitting a form. The controller supplies replayable synthetic data; never invent credentials or copy personal data.
 4. If no untried interactive control remains, return "swipe" to explore more content, or "back" to explore another feature.
 5. Only return "done" if there is truly nothing left to explore.
 6. Return ONLY valid JSON — no markdown, no explanation.
+7. Exercise different features: text input and echo, valid/invalid forms, submission and its actual result, switches, dropdown selection, cancellation, and scrolling. Leave repeated Login/Sign up tab switching and visit untried main navigation destinations.
+8. A demo success alert is a completed submission, not proof of access to a real authenticated screen. Continue exploring other available app features after it is dismissed.
 
 Respond with EXACTLY this JSON:
 {{
@@ -293,6 +296,7 @@ def _normalise(d: dict) -> dict:
         "bbox":   d.get("bbox"),
         "value":  d.get("value", ""),
         "reason": d.get("reason", ""),
+        "direction": d.get("direction", "up"),
     }
 
 
