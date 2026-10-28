@@ -1,0 +1,88 @@
+{
+  "step": 5,
+  "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_093558_668166Z\\screenshots\\screen_05_20260928_094356.png",
+  "screen": "7kpvznr8habttiu",
+  "elements": [
+    {
+      "type": "text_field",
+      "text": "",
+      "bbox": [
+        1,
+        1520,
+        1079,
+        2398
+      ],
+      "confidence": 0.916
+    },
+    {
+      "type": "accessibility",
+      "text": "Hotspot password",
+      "bbox": [
+        133,
+        665,
+        947,
+        736
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "com.android.settings:id/alertTitle"
+    },
+    {
+      "type": "accessibility",
+      "text": "7kpvznr8habttiu",
+      "bbox": [
+        123,
+        736,
+        957,
+        862
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": true,
+      "resource_id": "android:id/edit"
+    },
+    {
+      "type": "accessibility",
+      "text": "Cancel",
+      "bbox": [
+        636,
+        873,
+        810,
+        1015
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/button2"
+    },
+    {
+      "type": "accessibility",
+      "text": "OK",
+      "bbox": [
+        810,
+        873,
+        978,
+        1015
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/button1"
+    }
+  ],
+  "detection_counts": {
+    "yolo": 1,
+    "ocr": 0,
+    "accessibility": 4,
+    "merged": 5
+  }
+}

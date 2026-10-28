@@ -1,0 +1,16 @@
+'use client';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { Filter, Search, X } from 'lucide-react';
+import { Sheet } from './ui';
+export interface Options { apps: string[]; comparisons: string[]; models: string[]; reasons: string[] }
+export function useQuery() {
+  const params = useSearchParams(), router = useRouter(), path = usePathname();
+  return { params, update: (updates: Record<string, string | null>, target = path) => { const next = new URLSearchParams(params.toString()); for (const [k, v] of Object.entries(updates)) { if (!v) next.delete(k); else next.set(k, v); } if (!('page' in updates)) next.delete('page'); router.replace(target + (next.size ? `?${next}` : ''), { scroll: false }); } };
+}
+export function FilterBar({ options }: { options?: Options }) {
+  const { params, update } = useQuery();
+  const fields: [string, string, string[]][] = [['platform', 'Platform', ['web', 'mobile']], ['arch', 'Architecture', ['A', 'B']], ['app', 'App', options?.apps || []], ['cmp', 'Comparison', options?.comparisons || []], ['model', 'Model', options?.models || []], ['state', 'Execution state', ['completed', 'incomplete']], ['reason', 'Stop reason', [...(options?.reasons || []), '__unknown']]];
+  const keys = [...fields.map(f => f[0]), 'from', 'to', 'q', 'early'];
+  const active = keys.filter(k => params.get(k));
+  return <div className="filter-bar"><form className="search-control" onSubmit={e => { e.preventDefault(); update({ q: String(new FormData(e.currentTarget).get('q') || '') }); }}><Search size={16} /><input key={params.get('q') || ''} name="q" placeholder="Search run ID…" aria-label="Search run ID" defaultValue={params.get('q') || ''} /><button className="search-submit" type="submit">Search</button></form><Sheet title="Filter your evidence" description="Dates use UTC boundaries. Filters apply to all matching runs, including exports." trigger={<button className="button secondary"><Filter size={15} /> Filters {active.length > 0 && <span className="filter-count">{active.length}</span>}</button>}><div className="filter-grid">{fields.map(([key, label, values]) => <label key={key}>{label}<select value={params.get(key) || ''} onChange={e => update({ [key]: e.target.value })}><option value="">All {label.toLowerCase()}s</option>{values.map(v => <option key={v} value={v}>{v === '__unknown' ? 'Not recorded' : v}</option>)}</select></label>)}<label>From (UTC)<input type="date" value={params.get('from') || ''} onChange={e => update({ from: e.target.value })} /></label><label>To (UTC)<input type="date" value={params.get('to') || ''} onChange={e => update({ to: e.target.value })} /></label><label className="checkbox-label"><input type="checkbox" checked={params.get('early') === 'true'} onChange={e => update({ early: e.target.checked ? 'true' : '' })} /> Stopped early only</label></div></Sheet>{active.length > 0 && <button className="text-button" onClick={() => update(Object.fromEntries(keys.map(k => [k, null])))}>Clear filters</button>}<span className="filter-caption">{active.length ? 'Filtered selection' : 'All recorded experiments'}</span>{active.length > 0 && <div className="filter-chips">{active.map(k => <button key={k} onClick={() => update({ [k]: null })}>{k}: {params.get(k)} <X size={12} /></button>)}</div>}</div>;
+}

@@ -483,6 +483,60 @@ IMPORTANT RULES:
 
 14. Return ${targetTotal ? `at most ${targetTotal}` : 'a reasonable number of'} test cases total across all flows.
 
+15. ASSERTIONS (required, in addition to "expected_result"):
+    "expected_result" is a human-readable sentence for the report. Alongside
+    it, include an "assertions" array: structured, machine-checkable checks
+    that a script can run automatically after the steps finish. Every
+    assertion must be based strictly on evidence actually present in the
+    context above (a URL that was actually visited, an element that was
+    actually observed, a "required" flag that was actually observed) - do
+    not invent selectors, text, or values that were not observed.
+
+    Include 1-3 assertions per test case - as many as needed to verify
+    "expected_result" and no more. Each assertion is one of:
+
+      { "type": "url", "equals": "https://exact/observed/url" }
+      { "type": "url", "contains": "/observed/path" }
+      { "type": "title", "equals": "Observed Title" }
+      { "type": "title", "contains": "substring" }
+      { "type": "visible", "selector": "#observedSelector" }
+      { "type": "hidden", "selector": "#observedSelector" }
+      { "type": "text", "selector": "#observedSelector", "contains": "substring" }
+      { "type": "value", "selector": "#observedSelector", "equals": "exact value" }
+      { "type": "checked", "selector": "#observedSelector" }
+      { "type": "unchecked", "selector": "#observedSelector" }
+      { "type": "enabled", "selector": "#observedSelector" }
+      { "type": "disabled", "selector": "#observedSelector" }
+      { "type": "count", "selector": "#observedSelector", "equals": 1 }
+      { "type": "attribute", "selector": "#observedSelector", "attribute": "required" }
+
+    Rules for assertions:
+    - "type" is required. Every type except "url" and "title" requires
+      "selector" (use an observed selector).
+    - Use "equals" for an exact expected value/count, or "contains" for a
+      partial/substring match. Provide exactly one of "equals"/"contains"
+      per assertion (except "checked"/"unchecked"/"visible"/"hidden"/
+      "enabled"/"disabled", which need neither).
+    - For "attribute" checking a boolean HTML attribute (required,
+      disabled, readonly, checked, multiple, selected, autofocus) - omit
+      "equals" entirely. These attributes render as e.g. required="" in
+      the DOM, never required="true", so only presence/absence is
+      checkable, not a literal value. Only use "equals" on "attribute" for
+      a real string-valued attribute (e.g. "type", "placeholder").
+    - ALL assertions run ONCE, together, only after every step has
+      finished - never in between steps. Only include an assertion that
+      is still true once the LAST step has completed. Do NOT include an
+      assertion that was only true right after an earlier step (e.g. the
+      URL immediately after step 1) if a later step navigates away from
+      it - that assertion will always fail. If you need to verify an
+      earlier URL was reached, use a "contains"/"equals" assertion on the
+      element/page that is still true at the very end, or move the
+      relevant navigate to be the last step of the test case instead.
+    - A "negative" test case's assertions should verify the observed
+      failure/validation evidence (e.g. the page did NOT navigate away, an
+      observed required field/button is still visible), not an invented
+      error message.
+
 OBSERVED EXPLORATION CONTEXT (grouped by flow):
 
 ${JSON.stringify(
@@ -527,7 +581,11 @@ Use EXACTLY this structure:
         "description": "Submit the form"
       }
     ],
-    "expected_result": "Describe the expected behavior based on observed evidence"
+    "expected_result": "Describe the expected behavior based on observed evidence",
+    "assertions": [
+      { "type": "url", "equals": "https://example.com/page" },
+      { "type": "visible", "selector": "#example" }
+    ]
   }
 ]
 
@@ -833,6 +891,22 @@ function generateHeuristicTestCasesForFlow(flowContext, requestedCount = 2) {
     });
   }
 
+  const positiveAssertions = [];
+
+  if (primaryUrl) {
+    positiveAssertions.push({
+      type: 'url',
+      contains: getUrlPath(primaryUrl)
+    });
+  }
+
+  if (submitCandidate && submitCandidate.selector) {
+    positiveAssertions.push({
+      type: 'visible',
+      selector: submitCandidate.selector
+    });
+  }
+
   const positiveCase = {
     id: 'TC001',
     objective: `Exercise observed ${flowName} flow with valid interactions`,
@@ -840,7 +914,8 @@ function generateHeuristicTestCasesForFlow(flowContext, requestedCount = 2) {
     flow: flowName,
     preconditions: [],
     steps: positiveSteps,
-    expected_result: 'The flow remains interactive and navigates or updates according to observed behavior.'
+    expected_result: 'The flow remains interactive and navigates or updates according to observed behavior.',
+    assertions: positiveAssertions
   };
 
   const cases = [];
@@ -879,7 +954,16 @@ function generateHeuristicTestCasesForFlow(flowContext, requestedCount = 2) {
           description: 'Attempt to continue without filling required fields'
         }
       ],
-      expected_result: 'Submission should not proceed successfully when required inputs are left empty.'
+      expected_result: 'Submission should not proceed successfully when required inputs are left empty.',
+      assertions: [
+        {
+          type: 'visible',
+          selector: requiredField.selector
+        },
+        primaryUrl
+          ? { type: 'url', contains: getUrlPath(primaryUrl) }
+          : null
+      ].filter(Boolean)
     });
   }
 
@@ -891,11 +975,22 @@ function generateHeuristicTestCasesForFlow(flowContext, requestedCount = 2) {
       flow: flowName,
       preconditions: [],
       steps: positiveSteps,
-      expected_result: 'The observed controls remain usable across repeated executions.'
+      expected_result: 'The observed controls remain usable across repeated executions.',
+      assertions: positiveAssertions
     });
   }
 
   return cases.slice(0, requestedCount);
+}
+
+
+function getUrlPath(url) {
+
+  try {
+    return new URL(url).pathname;
+  } catch (_) {
+    return String(url || '');
+  }
 }
 
 
@@ -1205,8 +1300,111 @@ function validateTestCases(
         validSteps;
 
 
+      // ----------------------------------------------------------------------
+      // Validate assertions (optional field). Invalid individual assertions
+      // are dropped rather than failing the whole test case, since
+      // scriptGenerator.js falls back to parsing "expected_result" when a
+      // test case ends up with zero usable assertions.
+      // ----------------------------------------------------------------------
+
+      testCase.assertions =
+        validateAssertions(
+          testCase.assertions,
+          testCase.objective
+        );
+
+
       return true;
     });
+}
+
+
+// ============================================================================
+// VALIDATE ASSERTIONS
+// ============================================================================
+
+function validateAssertions(assertions, objectiveForLogging = '') {
+
+  if (!Array.isArray(assertions)) {
+    return [];
+  }
+
+
+  const validTypes =
+    new Set([
+      'url',
+      'title',
+      'visible',
+      'hidden',
+      'text',
+      'value',
+      'checked',
+      'unchecked',
+      'enabled',
+      'disabled',
+      'count',
+      'attribute'
+    ]);
+
+
+  const typesWithoutSelector =
+    new Set(['url', 'title']);
+
+
+  const typesNeedingComparator =
+    new Set(['url', 'title', 'text', 'value', 'count', 'attribute']);
+
+
+  return assertions.filter(assertion => {
+
+    if (!assertion || typeof assertion !== 'object') {
+      return false;
+    }
+
+    const type =
+      typeof assertion.type === 'string'
+        ? assertion.type.trim().toLowerCase()
+        : '';
+
+    if (!validTypes.has(type)) {
+      console.warn(
+        `[testGenerator] Dropping assertion with invalid type "${assertion.type}" in "${objectiveForLogging}".`
+      );
+      return false;
+    }
+
+    assertion.type = type;
+
+    if (
+      !typesWithoutSelector.has(type) &&
+      (typeof assertion.selector !== 'string' || assertion.selector.trim() === '')
+    ) {
+      console.warn(
+        `[testGenerator] Dropping "${type}" assertion with no selector in "${objectiveForLogging}".`
+      );
+      return false;
+    }
+
+    if (
+      typesNeedingComparator.has(type) &&
+      assertion.equals === undefined &&
+      assertion.contains === undefined
+    ) {
+      console.warn(
+        `[testGenerator] Dropping "${type}" assertion with no "equals"/"contains" in "${objectiveForLogging}".`
+      );
+      return false;
+    }
+
+    if (type === 'attribute' && (typeof assertion.attribute !== 'string' || assertion.attribute.trim() === '')) {
+      console.warn(
+        `[testGenerator] Dropping "attribute" assertion with no "attribute" name in "${objectiveForLogging}".`
+      );
+      return false;
+    }
+
+    return true;
+  });
 }
 
 
@@ -1225,6 +1423,11 @@ function normalizeTestCaseIds(
 
       id:
         `TC${String(index + 1).padStart(3, '0')}`,
+
+      assertions:
+        Array.isArray(testCase.assertions)
+          ? testCase.assertions
+          : [],
 
       steps:
         testCase.steps.map(

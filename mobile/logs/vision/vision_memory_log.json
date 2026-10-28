@@ -1,0 +1,62 @@
+[
+  {
+    "step": 1,
+    "screen": "unknown",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\screenshots\\screen_01_20260928_055155.png",
+    "action": "tap",
+    "target": "Login button",
+    "bbox": null,
+    "value": "",
+    "reason": "Tap the login button to proceed.",
+    "timestamp": "2026-09-28T05:52:37.171446+00:00",
+    "elements_detected": 0
+  },
+  {
+    "step": 2,
+    "screen": "unknown",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\screenshots\\screen_02_20260928_055239.png",
+    "action": "swipe",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "forced: repeated target",
+    "timestamp": "2026-09-28T05:53:02.523915+00:00",
+    "elements_detected": 0
+  },
+  {
+    "step": 3,
+    "screen": "unknown",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\screenshots\\screen_03_20260928_055304.png",
+    "action": "tap",
+    "target": "Login button",
+    "bbox": null,
+    "value": "",
+    "reason": "Attempting to tap the login button to progress.",
+    "timestamp": "2026-09-28T05:53:27.255482+00:00",
+    "elements_detected": 0
+  },
+  {
+    "step": 4,
+    "screen": "unknown",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\screenshots\\screen_04_20260928_055329.png",
+    "action": "swipe",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "No new interactive element is visible, attempting to reveal more content",
+    "timestamp": "2026-09-28T05:53:52.608210+00:00",
+    "elements_detected": 0
+  },
+  {
+    "step": 5,
+    "screen": "unknown",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\screenshots\\screen_05_20260928_055354.png",
+    "action": "swipe",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "No new interactive elements visible, attempting to reveal more content",
+    "timestamp": "2026-09-28T05:54:18.238131+00:00",
+    "elements_detected": 0
+  }
+]

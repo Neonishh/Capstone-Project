@@ -1,0 +1,365 @@
+{
+  "step": 2,
+  "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_104325_959627Z\\screenshots\\screen_02_20260928_104504.png",
+  "screen": "Wi\u2011Fi hotspot",
+  "elements": [
+    {
+      "type": "accessibility",
+      "text": "Wi\u2011Fi hotspot",
+      "bbox": [
+        0,
+        0,
+        1080,
+        598
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "com.android.settings:id/collapsing_toolbar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Navigate up",
+      "bbox": [
+        0,
+        128,
+        147,
+        275
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        598,
+        1080,
+        879
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "com.android.settings:id/switch_bar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Use Wi\u2011Fi hotspot",
+      "bbox": [
+        0,
+        598,
+        1080,
+        879
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "com.android.settings:id/switch_bar"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        839,
+        675,
+        985,
+        801
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/switch_widget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        879,
+        1080,
+        1085
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Hotspot name",
+      "bbox": [
+        0,
+        879,
+        1080,
+        1085
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "AndroidAP_3081",
+      "bbox": [
+        0,
+        879,
+        1080,
+        1085
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1085,
+        1080,
+        1291
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Security",
+      "bbox": [
+        0,
+        1085,
+        1080,
+        1291
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "WPA2-Personal",
+      "bbox": [
+        0,
+        1085,
+        1080,
+        1291
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1291,
+        1080,
+        1497
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Hotspot password",
+      "bbox": [
+        0,
+        1291,
+        1080,
+        1497
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "[REDACTED]",
+      "bbox": [
+        0,
+        1291,
+        1080,
+        1497
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1497,
+        1080,
+        1703
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Turn off hotspot automatically",
+      "bbox": [
+        0,
+        1497,
+        1080,
+        1703
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "When no devices are connected",
+      "bbox": [
+        0,
+        1497,
+        1080,
+        1703
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1537,
+        1038,
+        1663
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "checked": true,
+      "editable": false,
+      "resource_id": "android:id/switch_widget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1703,
+        1080,
+        1952
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Extend compatibility",
+      "bbox": [
+        0,
+        1703,
+        1080,
+        1952
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Helps other devices find this hotspot. Reduces hotspot connection speed.",
+      "bbox": [
+        0,
+        1703,
+        1080,
+        1952
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "checked": false,
+      "editable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1764,
+        1038,
+        1890
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "checked": true,
+      "editable": false,
+      "resource_id": "android:id/switch_widget"
+    }
+  ],
+  "detection_counts": {
+    "yolo": 0,
+    "ocr": 0,
+    "accessibility": 22,
+    "merged": 22
+  }
+}

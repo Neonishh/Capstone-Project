@@ -1,4 +1,5 @@
 'use strict';
+const { selectNativeOption } = require('./dropdown');
 require('dotenv').config();
 
 const Groq = require('groq-sdk');
@@ -565,6 +566,7 @@ function normalizeAction(obj) {
     new Set([
       'click',
       'fill',
+      'select',
       'navigate',
       'done'
     ]);
@@ -626,7 +628,7 @@ function normalizeAction(obj) {
  *
  * The LLM does NOT directly control the browser.
  */
-async function executeAction(
+async function executeActionInner(
   page,
   action,
   targetElement = null
@@ -700,6 +702,17 @@ async function executeAction(
     });
 
 
+    // A native <select> must never be clicked: Chromium opens an OS-level
+    // popup that Playwright cannot see or dismiss, which freezes the run.
+    if (await isNativeSelect(locator)) {
+      return executeActionInner(
+        page,
+        { ...action, action: 'select' },
+        targetElement
+      );
+    }
+
+
     await locator.click({
       timeout: 10000
     });
@@ -748,6 +761,15 @@ async function executeAction(
     });
 
 
+    if (await isNativeSelect(locator)) {
+      return executeActionInner(
+        page,
+        { ...action, action: 'select' },
+        targetElement
+      );
+    }
+
+
     await locator.fill(
       value,
       {
@@ -755,6 +777,51 @@ async function executeAction(
       }
     );
 
+
+    return;
+  }
+
+
+  // ==========================================================================
+  // SELECT (native <select> and custom dropdowns)
+  // ==========================================================================
+
+  if (type === 'select') {
+
+    if (!selector) {
+      throw new Error('executeAction: select has no selector');
+    }
+
+    console.log(
+      `[llmClient] Executing select: "${selector}" -> "${action.value}"`
+    );
+
+    const locator = page.locator(selector).first();
+
+    await locator.scrollIntoViewIfNeeded({ timeout: 8000 });
+
+    if (await isNativeSelect(locator)) {
+      return selectNativeOption(locator, action.value);
+      return;
+    }
+
+    // Custom dropdown: open, then click the matching option.
+    if (await locator.getAttribute('aria-expanded') !== 'true') {
+      await locator.click({ timeout: 10000 });
+    }
+
+    const wanted = String(action.value ?? '').trim();
+    if (!wanted) throw new Error('select: custom dropdown requires an option label');
+
+    const popupId = await locator.getAttribute('aria-controls') || await locator.getAttribute('aria-owns');
+    const scope = popupId && !popupId.includes(' ')
+      ? page.locator(`[id=${JSON.stringify(popupId)}]`) : page;
+    let option = wanted
+      ? scope.getByRole('option', { name: wanted, exact: true })
+      : page.getByRole('option').first();
+
+    if (await option.count() !== 1) throw new Error('select: option missing or ambiguous');
+    await option.click({ timeout: 5000 });
 
     return;
   }
@@ -994,6 +1061,52 @@ function getDefaultValue(
 // ============================================================================
 // EXPORTS
 // ============================================================================
+
+
+// ============================================================================
+// DROPDOWN HELPERS + STUCK-STATE RECOVERY
+// ============================================================================
+
+async function isNativeSelect(locator) {
+  try {
+    return await locator.evaluate(
+      el => el.tagName.toLowerCase() === 'select'
+    );
+  } catch (_) {
+    return false;
+  }
+}
+
+/**
+ * Chooses an option in a native <select> using selectOption (no popup).
+ * Tries value, then visible label; if the LLM gave nothing usable, picks the
+ * first enabled, non-empty option that is not already selected.
+ */
+/**
+ * Best-effort recovery after a failed action: close any open popup so the
+ * next DOM snapshot is not blocked by a dangling dropdown/overlay.
+ */
+async function recoverFromStuckState(page) {
+  try {
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(200);
+
+    const stillOpen = await page.locator('[aria-expanded="true"]').count();
+    if (stillOpen > 0) {
+      await page.mouse.click(1, 1);
+      await page.waitForTimeout(200);
+    }
+  } catch (_) { /* never let recovery throw */ }
+}
+
+async function executeAction(page, action, targetElement = null) {
+  try {
+    return await executeActionInner(page, action, targetElement);
+  } catch (err) {
+    await recoverFromStuckState(page);
+    throw err;
+  }
+}
 
 module.exports = {
   callLLM,

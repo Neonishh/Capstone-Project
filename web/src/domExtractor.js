@@ -100,7 +100,12 @@ async function getDOMElements(page) {
         '[role="menuitem"]',
 
         // Editable custom controls
-        '[contenteditable="true"]'
+        '[contenteditable="true"]',
+
+        // Custom dropdown triggers / popups (month-year pickers, comboboxes)
+        '[aria-haspopup]',
+        '[aria-expanded]',
+        '[role="listbox"] > *'
       ].join(',');
 
 
@@ -385,10 +390,6 @@ async function getDOMElements(page) {
 
       nodes.forEach((element, originalIndex) => {
 
-        if (results.length >= maxElements) {
-          return;
-        }
-
         if (seenNodes.has(element)) {
           return;
         }
@@ -571,6 +572,27 @@ async function getDOMElements(page) {
               ? cleanText(element.value, 100)
               : '',
 
+          ariaHasPopup:
+            element.getAttribute('aria-haspopup') || '',
+
+          // Native <select>: expose the real options (value/text/selected),
+          // same idea as the "options" field in the paper's parser output.
+          options:
+            tag === 'SELECT'
+              ? Array.from(element.options || [])
+                  .slice(0, 60)
+                  .map(opt => ({
+                    value: opt.value,
+                    text: opt.text.trim(),
+                    selected: opt.selected === true,
+                    disabled: opt.disabled === true ||
+                      (opt.parentElement.tagName === 'OPTGROUP' && opt.parentElement.disabled)
+                  }))
+              : [],
+
+          multiple:
+            tag === 'SELECT' ? element.multiple === true : false,
+
           boundingBox: {
             x: Math.round(rect.x),
             y: Math.round(rect.y),
@@ -580,6 +602,19 @@ async function getDOMElements(page) {
         });
       });
 
+
+      // Trim AFTER collecting. Open dropdown popups are usually appended at
+      // the end of <body> (portals), so a document-order cap would cut off
+      // exactly the options the agent needs. Keep them first.
+      if (results.length > maxElements) {
+        const isPopupItem = r =>
+          r.role === 'option' || r.role === 'menuitem';
+        const popup = results.filter(isPopupItem);
+        const rest = results.filter(r => !isPopupItem(r));
+        return popup.slice(0, Math.min(60, maxElements)).concat(
+          rest.slice(0, Math.max(0, maxElements - Math.min(popup.length, 60)))
+        );
+      }
 
       return results;
 

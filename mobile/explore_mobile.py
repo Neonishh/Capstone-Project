@@ -36,6 +36,7 @@ from src.mobile_preprocess import preprocess_elements, build_exploration_prompt,
 from src.memory_log import store_step, save_log
 from src.llm_client import call_llm, parse_action, execute_action, LLM_PROVIDER
 from src.test_generator import generate_test_cases
+from src.database_storage import write_exploration_metadata
 
 MAX_STEPS   = int(os.environ.get("MAX_STEPS", 10))
 STUB_LLM    = os.environ.get("STUB_LLM", "false").lower() == "true"
@@ -149,6 +150,9 @@ def main():
     reset_device_state(args.app_package)
     driver = build_driver(args.app_package, args.app_activity)
     memory_log = []
+    exploration_stop_reason = "step_budget"
+    exploration_complete = False
+    had_errors = False
     step_counter = 0
 
     try:
@@ -174,6 +178,7 @@ def main():
             print(f"[explore_mobile] After preprocessing: {len(elements)} elements")
 
             if not elements:
+                exploration_stop_reason = "no_interactive_controls"
                 print("[explore_mobile] No interactable elements found - ending exploration")
                 break
 
@@ -188,6 +193,8 @@ def main():
             try:
                 llm_response = call_llm(prompt)
             except Exception as e:
+                had_errors = True
+                exploration_stop_reason = "rate_limit" if "429" in str(e) else "llm_error"
                 print(f"[explore_mobile] call_llm() error: {e}")
                 store_step(memory_log, {
                     "step": step_counter,
@@ -236,6 +243,8 @@ def main():
                     }
 
             if action["action"] == "done":
+                exploration_stop_reason = "parse_error" if action.get("reason") == "parse_error" else "agent_done"
+                exploration_complete = exploration_stop_reason == "agent_done" and not had_errors and not STUB_LLM
                 print("[explore_mobile] LLM returned 'done' - exploration complete")
                 break
 
@@ -246,6 +255,8 @@ def main():
             except Exception as e:
                 print(f"[explore_mobile] execute_action failed: {e}")
                 execute_error = str(e)
+                had_errors = True
+                exploration_stop_reason = "execution_error"
 
             to_meta = get_screen_meta(driver)
             screenshot_after = take_screenshot(driver, f"{step_counter + 1}_after_{action['action']}")
@@ -292,6 +303,7 @@ def main():
                 # anywhere, so to_url is identical for all 3 steps even
                 # though real, distinct work is happening.
                 if same_screen and same_target:
+                    exploration_stop_reason = "loop_detected"
                     print("[explore_mobile] Loop detected - ending exploration")
                     break
 
@@ -305,6 +317,8 @@ def main():
             generate_test_cases(memory_log, TEST_CASES_PATH)
 
     except Exception as fatal:
+        exploration_stop_reason = "error"
+        exploration_complete = False
         print(f"\n[explore_mobile] FATAL ERROR: {fatal}")
         import traceback
         traceback.print_exc()
@@ -312,6 +326,14 @@ def main():
             save_log(memory_log, MEMORY_LOG_PATH)
 
     finally:
+        save_log(memory_log, MEMORY_LOG_PATH)
+        defaults = {"openai": "gpt-4o-mini", "gemini": "gemini-2.5-flash",
+                    "groq": "llama-3.3-70b-versatile", "ollama": "llama3.1"}
+        write_exploration_metadata(Path(MEMORY_LOG_PATH).parent, memory_log, {
+            "model": "stub" if STUB_LLM else os.environ.get(LLM_PROVIDER.upper() + "_MODEL", defaults.get(LLM_PROVIDER)),
+            "exploration_stop_reason": "stub" if STUB_LLM else exploration_stop_reason,
+            "exploration_complete": exploration_complete,
+        })
         try:
             driver.quit()
         except Exception:

@@ -1,0 +1,217 @@
+{
+  "step": 3,
+  "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_03_20260928_082242.png",
+  "screen": "Hotspot & tethering",
+  "elements": [
+    {
+      "type": "accessibility",
+      "text": "Hotspot & tethering",
+      "bbox": [
+        0,
+        0,
+        1080,
+        598
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "com.android.settings:id/collapsing_toolbar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Navigate up",
+      "bbox": [
+        0,
+        128,
+        147,
+        275
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Use hotspot and tethering to provide internet to other devices through your mobile data connection. Apps can also create a hotspot to share content with nearby devices.",
+      "bbox": [
+        63,
+        619,
+        1038,
+        756
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        798,
+        1080,
+        1047
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Wi\u2011Fi hotspot",
+      "bbox": [
+        63,
+        840,
+        373,
+        911
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Not sharing internet or content with other devices",
+      "bbox": [
+        63,
+        911,
+        804,
+        1005
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "Wi\u2011Fi hotspot",
+      "bbox": [
+        849,
+        798,
+        1038,
+        1047
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": true,
+      "resource_id": "com.android.settings:id/switchWidget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1047,
+        1080,
+        1253
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "USB tethering",
+      "bbox": [
+        63,
+        1089,
+        383,
+        1160
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Share phone\u2019s internet connection via USB",
+      "bbox": [
+        63,
+        1160,
+        751,
+        1211
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1087,
+        1038,
+        1213
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "resource_id": "android:id/switch_widget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1253,
+        1080,
+        1459
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Bluetooth tethering",
+      "bbox": [
+        63,
+        1295,
+        511,
+        1366
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Share phone\u2019s internet connection via Bluetooth",
+      "bbox": [
+        63,
+        1366,
+        839,
+        1417
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1293,
+        1038,
+        1419
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "resource_id": "android:id/switch_widget"
+    }
+  ]
+}

@@ -1,29 +1,21 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildFallbackAction } = require('../src/llmClient');
+// Unit tests do not make API calls or need a real credential.
+process.env.GROQ_API_KEY ||= 'unit-test-placeholder';
+const { parseJSONResponse, parseExplorationPlan } = require('../src/llmClient');
 
-test('buildFallbackAction prefers navigation for links in Elements flow', () => {
-  const action = buildFallbackAction([
-    { elementId: 0, tag: 'A', selector: 'a.nav-link', href: 'https://demoqa.com/text-box', text: 'Text Box' }
-  ], 'Elements', []);
-
-  assert.equal(action.action, 'navigate');
-  assert.equal(action.selector, 'a.nav-link');
-  assert.equal(action.url, 'https://demoqa.com/text-box');
+test('parses fenced JSON returned by the model', () => {
+  assert.deepEqual(parseJSONResponse('```json\n["form"]\n```'), ['form']);
 });
 
-test('buildFallbackAction prefers filling for inputs in Forms flow', () => {
-  const action = buildFallbackAction([
-    { elementId: 0, tag: 'INPUT', selector: '#firstName', inputType: 'text', placeholder: 'First Name', text: '' }
-  ], 'Forms', []);
-
-  assert.equal(action.action, 'fill');
-  assert.equal(action.selector, '#firstName');
-  assert.equal(action.value, 'testuser');
+test('keeps select actions and their exact requested values', () => {
+  const plan = parseExplorationPlan({ actions: [{ action: ' SELECT ', selector: ' #month ', value: '03', elementId: 7 }] });
+  assert.equal(plan.actions[0].action, 'select');
+  assert.equal(plan.actions[0].selector, '#month');
+  assert.equal(plan.actions[0].value, '03');
 });
 
-test('buildFallbackAction returns done when no useful element remains', () => {
-  const action = buildFallbackAction([], 'Elements', []);
-
-  assert.equal(action.action, 'done');
+test('rejects invalid model output and filters unsupported actions', () => {
+  assert.throws(() => parseJSONResponse('not valid JSON'), /parse valid JSON/);
+  assert.deepEqual(parseExplorationPlan([{ action: 'invented-action' }]), { actions: [] });
 });

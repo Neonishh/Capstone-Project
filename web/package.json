@@ -5,13 +5,16 @@
   "scripts": {
     "start": "node explore.js",
     "explore": "node explore.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate:scripts": "node src/scriptGenerator.js",
+    "test:generated": "node src/runTests.js",
+    "test": "node --test test/*.test.js ../database/*.test.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "description": "",
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "playwright": "^1.58.1"
   },
   "dependencies": {

@@ -1,4 +1,6 @@
 'use strict';
+const { parseRunArgs, writeMetadata, finishMetadata } = require('./src/runMetadata');
+const { selectNativeOption } = require('./src/dropdown');
 require('dotenv').config();
 
 const { chromium } = require('playwright');
@@ -1226,6 +1228,8 @@ async function performAndLog(
 
   let success = true;
   let error = '';
+  let actualValue = '';
+  if ((element.tag || '').toUpperCase() === 'SELECT') action = 'select';
 
 
   let screenshotBefore = '';
@@ -1280,15 +1284,20 @@ async function performAndLog(
           element.selector
         ).first();
 
-      const options =
-        await locator.locator('option').all();
-
-      if (options.length > 0) {
-
-        await locator.selectOption({
-          index: 0
-        });
-      }
+      actualValue = await selectNativeOption(locator, element.requestedValue, {
+        recover: true,
+        onFailure: async err => {
+          storeStep(state.memoryLog, {
+            step: state.globalStep++, flow_name: flow.name,
+            action: 'select', target: element.selector,
+            target_element_details: buildTargetElementDetails(element),
+            value: String(element.requestedValue ?? ''),
+            from_url: before.url, to_url: page.url(),
+            success: false, error: err.message,
+            timestamp: new Date().toISOString()
+          });
+        }
+      });
 
     } else if (
       action === 'click'
@@ -1404,7 +1413,7 @@ async function performAndLog(
       value:
         action === 'fill'
           ? getSafeValue(element)
-          : '',
+          : actualValue,
 
       to_url:
         after.url,
@@ -1864,7 +1873,9 @@ function buildAndSaveContext(memoryLog) {
 
 async function runExploration() {
 
+  const runMetadata = parseRunArgs(process.argv.slice(2));
   ensureDirectories();
+  writeMetadata(runMetadata);
 
 
   const memoryLog = [];
@@ -2032,7 +2043,7 @@ async function runExploration() {
 
 
   await browser.close();
-
+  finishMetadata(runMetadata);
 
   return {
     memoryLog,
@@ -2075,5 +2086,6 @@ module.exports = {
   selectRelevantSubFeatures,
   selectTopLevelFeatures,
   selectPageSubFeatures,
-  askLLMForSubFeatures
+  askLLMForSubFeatures,
+  performAndLog
 };

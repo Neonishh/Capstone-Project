@@ -1,0 +1,256 @@
+[
+  {
+    "step": 1,
+    "screen": "Hotspot password",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_01_20260928_103021.png",
+    "action": "tap",
+    "target": "7kpvznr8habttiu",
+    "bbox": [
+      123,
+      736,
+      957,
+      862
+    ],
+    "value": "",
+    "reason": "Tap the hotspot password field to interact with it",
+    "timestamp": "2026-09-28T10:32:32.406637+00:00",
+    "elements_detected": 5,
+    "detection_counts": {
+      "yolo": 1,
+      "ocr": 0,
+      "accessibility": 4,
+      "merged": 5
+    },
+    "execution": {
+      "status": "executed",
+      "method": "tap",
+      "tap": [
+        540,
+        735
+      ],
+      "screenshot_after": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_01_after_20260928_103235.png",
+      "screen_after": "Hotspot password",
+      "checkable_states_before": {},
+      "checkable_states_after": {},
+      "state_changes": {}
+    },
+    "target_control": {
+      "text": "7kpvznr8habttiu",
+      "resource_id": "android:id/edit",
+      "clickable": true,
+      "checkable": false,
+      "checked_before": false
+    }
+  },
+  {
+    "step": 2,
+    "screen": "Hotspot password",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_02_20260928_103238.png",
+    "action": "back",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "missing_type_value",
+    "timestamp": "2026-09-28T10:33:49.143966+00:00",
+    "elements_detected": 5,
+    "detection_counts": {
+      "yolo": 1,
+      "ocr": 0,
+      "accessibility": 4,
+      "merged": 5
+    },
+    "execution": {
+      "status": "executed",
+      "method": "back",
+      "screenshot_after": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_02_after_20260928_103352.png",
+      "screen_after": "Hotspot password",
+      "checkable_states_before": {},
+      "checkable_states_after": {},
+      "state_changes": {}
+    }
+  },
+  {
+    "step": 3,
+    "screen": "Hotspot password",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_03_20260928_103353.png",
+    "action": "back",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "missing_type_value",
+    "timestamp": "2026-09-28T10:35:29.831111+00:00",
+    "elements_detected": 4,
+    "detection_counts": {
+      "yolo": 0,
+      "ocr": 0,
+      "accessibility": 4,
+      "merged": 4
+    },
+    "execution": {
+      "status": "executed",
+      "method": "back",
+      "screenshot_after": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_03_after_20260928_103533.png",
+      "screen_after": "Wi\u2011Fi hotspot",
+      "checkable_states_before": {},
+      "checkable_states_after": {
+        "android:id/switch_widget||[839, 675, 985, 801]": {
+          "text": "",
+          "checked": false
+        },
+        "android:id/switch_widget||[892, 1537, 1038, 1663]": {
+          "text": "",
+          "checked": true
+        },
+        "android:id/switch_widget||[892, 1764, 1038, 1890]": {
+          "text": "",
+          "checked": true
+        }
+      },
+      "state_changes": {
+        "android:id/switch_widget||[839, 675, 985, 801]": {
+          "before": null,
+          "after": {
+            "text": "",
+            "checked": false
+          }
+        },
+        "android:id/switch_widget||[892, 1764, 1038, 1890]": {
+          "before": null,
+          "after": {
+            "text": "",
+            "checked": true
+          }
+        },
+        "android:id/switch_widget||[892, 1537, 1038, 1663]": {
+          "before": null,
+          "after": {
+            "text": "",
+            "checked": true
+          }
+        }
+      }
+    }
+  },
+  {
+    "step": 4,
+    "screen": "Wi\u2011Fi hotspot",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_04_20260928_103535.png",
+    "action": "swipe",
+    "target": "",
+    "bbox": null,
+    "value": "",
+    "reason": "llm_error",
+    "timestamp": "2026-09-28T10:38:17.615356+00:00",
+    "elements_detected": 22,
+    "detection_counts": {
+      "yolo": 0,
+      "ocr": 0,
+      "accessibility": 22,
+      "merged": 22
+    },
+    "execution": {
+      "status": "executed",
+      "method": "swipe",
+      "screenshot_after": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_04_after_20260928_103830.png",
+      "screen_after": "Wi\u2011Fi hotspot",
+      "checkable_states_before": {
+        "android:id/switch_widget||[839, 675, 985, 801]": {
+          "text": "",
+          "checked": false
+        },
+        "android:id/switch_widget||[892, 1537, 1038, 1663]": {
+          "text": "",
+          "checked": true
+        },
+        "android:id/switch_widget||[892, 1764, 1038, 1890]": {
+          "text": "",
+          "checked": true
+        }
+      },
+      "checkable_states_after": {
+        "android:id/switch_widget||[839, 675, 985, 801]": {
+          "text": "",
+          "checked": false
+        },
+        "android:id/switch_widget||[892, 1537, 1038, 1663]": {
+          "text": "",
+          "checked": true
+        },
+        "android:id/switch_widget||[892, 1764, 1038, 1890]": {
+          "text": "",
+          "checked": true
+        }
+      },
+      "state_changes": {}
+    }
+  },
+  {
+    "step": 5,
+    "screen": "Wi\u2011Fi hotspot",
+    "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_05_20260928_103832.png",
+    "action": "tap",
+    "target": "Use Wi\u2011Fi hotspot",
+    "bbox": [
+      0,
+      598,
+      1080,
+      879
+    ],
+    "value": "",
+    "reason": "Tap the 'Use Wi\u2011Fi hotspot' button to activate the hotspot.",
+    "timestamp": "2026-09-28T10:40:53.198310+00:00",
+    "elements_detected": 22,
+    "detection_counts": {
+      "yolo": 0,
+      "ocr": 0,
+      "accessibility": 22,
+      "merged": 22
+    },
+    "execution": {
+      "status": "executed",
+      "method": "tap",
+      "tap": [
+        540,
+        679
+      ],
+      "screenshot_after": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_103009_256934Z\\screenshots\\screen_05_after_20260928_104055.png",
+      "screen_after": "Wi\u2011Fi hotspot",
+      "checkable_states_before": {
+        "android:id/switch_widget||[839, 675, 985, 801]": {
+          "text": "",
+          "checked": false
+        },
+        "android:id/switch_widget||[892, 1537, 1038, 1663]": {
+          "text": "",
+          "checked": true
+        },
+        "android:id/switch_widget||[892, 1764, 1038, 1890]": {
+          "text": "",
+          "checked": true
+        }
+      },
+      "checkable_states_after": {
+        "android:id/switch_widget||[839, 675, 985, 801]": {
+          "text": "",
+          "checked": false
+        },
+        "android:id/switch_widget||[892, 1537, 1038, 1663]": {
+          "text": "",
+          "checked": true
+        },
+        "android:id/switch_widget||[892, 1764, 1038, 1890]": {
+          "text": "",
+          "checked": true
+        }
+      },
+      "state_changes": {}
+    },
+    "target_control": {
+      "text": "Use Wi\u2011Fi hotspot",
+      "resource_id": "com.android.settings:id/switch_bar",
+      "clickable": true,
+      "checkable": false,
+      "checked_before": false
+    }
+  }
+]

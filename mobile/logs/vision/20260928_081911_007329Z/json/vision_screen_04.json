@@ -1,0 +1,315 @@
+{
+  "step": 4,
+  "screenshot": "C:\\Users\\Lenovo\\OneDrive\\Desktop\\Sem V\\Capstone\\Capstone-Project\\mobile\\logs\\vision\\20260928_081911_007329Z\\screenshots\\screen_04_20260928_082430.png",
+  "screen": "Wi\u2011Fi hotspot",
+  "elements": [
+    {
+      "type": "accessibility",
+      "text": "Wi\u2011Fi hotspot",
+      "bbox": [
+        0,
+        0,
+        1080,
+        598
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "com.android.settings:id/collapsing_toolbar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Navigate up",
+      "bbox": [
+        0,
+        128,
+        147,
+        275
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        598,
+        1080,
+        879
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": "com.android.settings:id/switch_bar"
+    },
+    {
+      "type": "accessibility",
+      "text": "Use Wi\u2011Fi hotspot",
+      "bbox": [
+        116,
+        703,
+        776,
+        774
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "com.android.settings:id/switch_text"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        839,
+        675,
+        985,
+        801
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "resource_id": "android:id/switch_widget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        879,
+        1080,
+        1085
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Hotspot name",
+      "bbox": [
+        63,
+        921,
+        397,
+        992
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "AndroidAP_3081",
+      "bbox": [
+        63,
+        992,
+        340,
+        1043
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1085,
+        1080,
+        1291
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Security",
+      "bbox": [
+        63,
+        1127,
+        252,
+        1198
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "WPA2-Personal",
+      "bbox": [
+        63,
+        1198,
+        317,
+        1249
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1291,
+        1080,
+        1497
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Hotspot password",
+      "bbox": [
+        63,
+        1333,
+        496,
+        1404
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022",
+      "bbox": [
+        63,
+        1404,
+        393,
+        1455
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1497,
+        1080,
+        1703
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Turn off hotspot automatically",
+      "bbox": [
+        63,
+        1539,
+        772,
+        1610
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "When no devices are connected",
+      "bbox": [
+        63,
+        1610,
+        584,
+        1661
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1537,
+        1038,
+        1663
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "resource_id": "android:id/switch_widget"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        0,
+        1703,
+        1080,
+        1952
+      ],
+      "confidence": 1.0,
+      "clickable": true,
+      "checkable": false,
+      "resource_id": ""
+    },
+    {
+      "type": "accessibility",
+      "text": "Extend compatibility",
+      "bbox": [
+        63,
+        1745,
+        540,
+        1816
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/title"
+    },
+    {
+      "type": "accessibility",
+      "text": "Helps other devices find this hotspot. Reduces hotspot connection speed.",
+      "bbox": [
+        63,
+        1816,
+        850,
+        1910
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": false,
+      "resource_id": "android:id/summary"
+    },
+    {
+      "type": "accessibility",
+      "text": "",
+      "bbox": [
+        892,
+        1764,
+        1038,
+        1890
+      ],
+      "confidence": 1.0,
+      "clickable": false,
+      "checkable": true,
+      "resource_id": "android:id/switch_widget"
+    }
+  ]
+}

@@ -84,10 +84,15 @@ function preprocessDOM(rawElements) {
       const contentEditable =
         el.contentEditable === true;
 
+      const popupTrigger =
+        Boolean(el.ariaHasPopup) ||
+        (el.ariaExpanded !== null && el.ariaExpanded !== undefined);
+
       return (
         validTag ||
         validRole ||
-        contentEditable
+        contentEditable ||
+        popupTrigger
       );
     });
 
@@ -136,6 +141,7 @@ function preprocessDOM(rawElements) {
       // For anonymous controls, retain them if they are clearly
       // interactive through their tag/role.
       const inherentlyInteractive =
+        Boolean(el.ariaHasPopup) ||
         ALLOWED_TAGS.has(tag) ||
         ALLOWED_ROLES.has(role) ||
         el.contentEditable === true;
@@ -250,6 +256,17 @@ function preprocessDOM(rawElements) {
   };
 
 
+  // If a dropdown/popup is currently open, its options must come FIRST,
+  // otherwise they get sliced off by MAX_ELEMENTS and the agent can only
+  // re-click the trigger (the "stuck in dropdown" loop).
+  const popupOpen =
+    filtered.some(el => el.ariaExpanded === 'true');
+
+  if (popupOpen) {
+    priority.option = -1;
+    priority.menuitem = -1;
+  }
+
   filtered.sort((a, b) => {
 
     const aTag =
@@ -355,6 +372,24 @@ function compactElementForLLM(element, alreadyUsed = false) {
 
     required:
       Boolean(element.required),
+
+    // Dropdown awareness
+    ariaExpanded:
+      element.ariaExpanded === undefined ? null : element.ariaExpanded,
+
+    ariaHasPopup:
+      element.ariaHasPopup || '',
+
+    currentValue:
+      element.value || '',
+
+    options:
+      Array.isArray(element.options) && element.options.length > 0
+        ? element.options
+            .filter(o => !o.disabled)
+            .slice(0, 40)
+            .map(o => ({ value: o.value, text: o.text, selected: o.selected }))
+        : undefined,
 
     alreadyUsed
   };
@@ -608,7 +643,8 @@ You should:
 2. Avoid repeatedly performing actions already completed.
 3. Use the elementId supplied in the current element list.
 4. Use "navigate" for links when navigation is appropriate.
-5. Use "click" for buttons and interactive controls.
+5. Use "click" for buttons and interactive controls (NEVER for a native
+   SELECT element - see the dropdown rules below).
 6. Use "fill" for text-entry fields.
 7. Use realistic but safe test data when filling fields.
 8. If a form is clearly part of the flow, fill relevant fields before submitting.
@@ -621,6 +657,18 @@ You should:
     clearly a test/demo environment.
 13. Stop when the meaningful functionality of the current flow appears
     sufficiently explored.
+
+DROPDOWN RULES:
+- A native SELECT element lists its choices in "options". To choose one,
+  use {"action":"select","elementId":N,"value":"<option value or text from options>"}.
+  Never use "click" or "fill" on a native SELECT. Do not click individual options.
+- A custom dropdown (ariaHasPopup set, or role=combobox) must be opened with ONE
+  "click". When it is open (ariaExpanded = "true") its role=option / menuitem
+  entries appear in the element list: pick one with "click" on that option.
+  Do NOT click the trigger again while it is already open.
+- For multi-part pickers (e.g. month / year / day), handle each dropdown in
+  turn and choose a valid value for every one before submitting the form.
+- Once a dropdown has a value chosen, treat it as done and continue the form.
 
 IMPORTANT:
 - elementId values are valid only for the CURRENT DOM snapshot.
@@ -649,10 +697,10 @@ Otherwise return:
 {
   "actions": [
     {
-      "action": "click" | "fill" | "navigate" | "done",
+      "action": "click" | "fill" | "select" | "navigate" | "done",
       "elementId": <number or null>,
       "selector": "<selector from current element list>",
-      "value": "<value only for fill>",
+      "value": "<value for fill or select>",
       "url": "<observed href only for navigate>",
       "reason": "<short explanation>"
     }
