@@ -127,6 +127,9 @@ def _execute_step(driver, action: str, target: str, value: str) -> None:
         return
 
     if action_lower in ("tap", "entertext", "longpress"):
+        # Dismiss any permission dialog before attempting to find the element
+        _dismiss_permission_dialog(driver)
+
         element = _find_element(driver, target)
         if element is None:
             raise RuntimeError(f"Element not found for target: '{target}'")
@@ -147,9 +150,46 @@ def _execute_step(driver, action: str, target: str, value: str) -> None:
     raise RuntimeError(f"Unsupported action: '{action}'")
 
 
+def _dismiss_permission_dialog(driver) -> None:
+    """
+    Silently dismisses Android permission dialogs before each step.
+    Tries common 'Allow' button resource IDs and text patterns.
+    Non-fatal — if no dialog is present this is a no-op.
+    """
+    from appium.webdriver.common.appiumby import AppiumBy
+    allow_ids = [
+        "com.android.permissioncontroller:id/permission_allow_button",
+        "com.android.permissioncontroller:id/permission_allow_foreground_only_button",
+        "com.android.permissioncontroller:id/permission_allow_one_time_button",
+        "android:id/button1",
+    ]
+    for rid in allow_ids:
+        try:
+            btn = driver.find_element(AppiumBy.ID, rid)
+            btn.click()
+            print(f"    [auto] Dismissed permission dialog: {rid}")
+            time.sleep(0.5)
+            return
+        except Exception:
+            pass
+    # Also try by text
+    for text in ("Allow", "ALLOW", "Allow all the time", "Allow only while using the app"):
+        try:
+            btn = driver.find_element(
+                AppiumBy.ANDROID_UIAUTOMATOR,
+                f'new UiSelector().text("{text}")',
+            )
+            btn.click()
+            print(f"    [auto] Dismissed permission dialog via text: {text}")
+            time.sleep(0.5)
+            return
+        except Exception:
+            pass
+
+
 def _find_element(driver, target: str):
     """
-    Locates an element by resource_id or accessibility_id.
+    Locates an element using multiple strategies in priority order.
     Returns WebElement or None.
     """
     from appium.webdriver.common.appiumby import AppiumBy
@@ -157,25 +197,43 @@ def _find_element(driver, target: str):
     if not target:
         return None
 
-    # resource-id contains '/' or ':id/'
+    # 1. resource-id (contains '/' or ':id/')
     if "/" in target or ":id/" in target:
         try:
             return driver.find_element(AppiumBy.ID, target)
         except Exception:
             pass
-    else:
-        # Try accessibility id first
+
+    # 2. Full Android class name (e.g. android.widget.ImageButton)
+    if "." in target and "android" in target.lower():
         try:
-            return driver.find_element(AppiumBy.ACCESSIBILITY_ID, target)
+            return driver.find_element(
+                AppiumBy.ANDROID_UIAUTOMATOR,
+                f'new UiSelector().className("{target}").instance(0)',
+            )
         except Exception:
             pass
 
-    # Fallback: visible text
+    # 3. Accessibility ID (content-desc)
     try:
-        from appium.webdriver.common.appiumby import AppiumBy
+        return driver.find_element(AppiumBy.ACCESSIBILITY_ID, target)
+    except Exception:
+        pass
+
+    # 4. Exact visible text
+    try:
         return driver.find_element(
             AppiumBy.ANDROID_UIAUTOMATOR,
             f'new UiSelector().text("{target}")',
+        )
+    except Exception:
+        pass
+
+    # 5. Text contains (partial match)
+    try:
+        return driver.find_element(
+            AppiumBy.ANDROID_UIAUTOMATOR,
+            f'new UiSelector().textContains("{target}")',
         )
     except Exception:
         pass

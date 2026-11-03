@@ -38,7 +38,7 @@ from src.llm_client import call_llm, parse_action, execute_action, LLM_PROVIDER
 from src.test_generator import generate_test_cases
 from src.database_storage import write_exploration_metadata
 
-MAX_STEPS   = int(os.environ.get("MAX_STEPS", 10))
+MAX_STEPS   = int(os.environ.get("MAX_STEPS", 40))
 STUB_LLM    = os.environ.get("STUB_LLM", "false").lower() == "true"
 APPIUM_HOST = os.environ.get("APPIUM_HOST", "localhost")
 APPIUM_PORT = int(os.environ.get("APPIUM_PORT", 4723))
@@ -50,6 +50,27 @@ TEST_CASES_PATH = str(LOGS_DIR / "mobile_test_cases.json")
 
 DEFAULT_APP_PACKAGE  = "com.android.settings"
 DEFAULT_APP_ACTIVITY = ".Settings"
+
+# Dismiss-detection helpers — shared with run_pipeline.py enforcement logic
+_DISMISS_KW = {
+    "close", "cancel", "dismiss", "skip", "exit", "quit", "no", "deny",
+    "decline", "reject", "not now", "maybe later", "later", "never",
+    "don't allow", "dont allow", "do not allow", "discard", "x",
+}
+
+def _is_dismiss(el: dict) -> bool:
+    combined = " ".join(filter(None, [
+        (el.get("text") or "").lower(),
+        (el.get("content_desc") or "").lower(),
+        (el.get("resource_id") or "").lower(),
+    ]))
+    return any(kw in combined for kw in _DISMISS_KW)
+
+def _has_non_dismiss(elements: list, tried: set) -> bool:
+    return any(
+        (el.get("resource_id") or el.get("tag", "")) not in tried and not _is_dismiss(el)
+        for el in elements
+    )
 
 
 def take_screenshot(driver, label: str) -> str:
@@ -82,9 +103,6 @@ def reset_device_state(app_package: str) -> None:
     print("[explore_mobile] Resetting device state before launch...")
 
     commands = [
-        ["adb", "shell", "am", "force-stop", "com.google.android.gm"],
-        ["adb", "shell", "am", "force-stop", "com.google.android.gms"],
-        ["adb", "shell", "pm", "clear", "com.google.android.gms"],
         ["adb", "shell", "am", "force-stop", app_package],
     ]
     for cmd in commands:
@@ -242,12 +260,39 @@ def main():
                         "reason": "auto-override: repeated an already-tried element",
                     }
 
+            # Never press back on the first 3 steps — app just launched,
+            # pressing back immediately exits it.
+            if action["action"] == "back" and step_counter < 3:
+                print(f"[explore_mobile] Blocked 'back' on step {step_counter+1} (too early) — forcing swipe")
+                action = {"action": "swipe", "elementId": None,
+                          "resource_id": "", "value": "",
+                          "reason": "auto-override: back blocked on early step"}
+
+            # Block dismiss/close/cancel taps when non-dismiss elements exist
+            if action["action"] == "tap" and action.get("elementId") is not None:
+                from src.mobile_preprocess import get_tried_targets as _get_tried
+                _already_tried = _get_tried(memory_log, from_meta["url"])
+                _chosen = next((el for el in elements if el["elementId"] == action["elementId"]), None)
+                if _chosen and _is_dismiss(_chosen) and _has_non_dismiss(elements, _already_tried):
+                    _override = next(
+                        (el for el in elements
+                         if (el.get("resource_id") or el.get("tag", "")) not in _already_tried
+                         and not _is_dismiss(el)), None)
+                    if _override:
+                        print(
+                            f"[explore_mobile] Blocked dismiss tap on "
+                            f"'{_chosen.get('text') or _chosen.get('resource_id')}' — "
+                            f"redirecting to '{_override.get('text') or _override.get('resource_id') or _override.get('tag')}'"
+                        )
+                        action = {"action": "tap", "elementId": _override["elementId"],
+                                  "resource_id": _override.get("resource_id", ""),
+                                  "value": "", "reason": "auto-override: explore before dismissing"}
+
             if action["action"] == "done":
                 exploration_stop_reason = "parse_error" if action.get("reason") == "parse_error" else "agent_done"
                 exploration_complete = exploration_stop_reason == "agent_done" and not had_errors and not STUB_LLM
                 print("[explore_mobile] LLM returned 'done' - exploration complete")
                 break
-
             execute_error = None
             try:
                 execute_action(driver, action, elements)

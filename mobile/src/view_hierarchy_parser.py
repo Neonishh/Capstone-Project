@@ -34,11 +34,18 @@ INTERACTIVE_CLASSES = {
     "android.widget.RadioButton",
     "android.widget.Switch",
     "android.widget.Spinner",
-    "android.widget.TextView",          # included when clickable=true
-    "android.view.View",                # included when clickable=true
-    "android.widget.LinearLayout",      # included when clickable=true
-    "android.widget.RelativeLayout",    # included when clickable=true
+    "android.widget.TextView",
+    "android.view.View",
+    "android.widget.LinearLayout",
+    "android.widget.RelativeLayout",
+    "android.widget.FrameLayout",
     "androidx.recyclerview.widget.RecyclerView",
+    # Material Design / Jetpack containers commonly used as tap targets
+    "androidx.appcompat.widget.AppCompatButton",
+    "androidx.appcompat.widget.AppCompatTextView",
+    "com.google.android.material.button.MaterialButton",
+    "com.google.android.material.floatingactionbutton.FloatingActionButton",
+    "com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton",
 }
 
 
@@ -78,32 +85,39 @@ def parse_elements(xml_source: str) -> list:
     index = 0
 
     for node in root.iter():
-        # Skip nodes that are not displayed
-        if node.get("displayed", "false").lower() != "true":
+        # Skip nodes that are explicitly not displayed.
+        # Note: missing "displayed" attribute means we include it — many
+        # first-launch screens omit this attribute entirely on interactive
+        # elements but they are still visible and tappable.
+        displayed = node.get("displayed", "true").lower()
+        if displayed == "false":
             continue
 
         class_name = node.get("class", "")
         clickable = node.get("clickable", "false").lower() == "true"
+        enabled   = node.get("enabled",   "true").lower()  == "true"
         checkable = node.get("checkable", "false").lower() == "true"
 
         # Keep if it's a known interactive class OR explicitly clickable
         is_interactive_class = class_name in INTERACTIVE_CLASSES
-        if not (is_interactive_class or clickable):
+        # Also keep any enabled+clickable element regardless of class —
+        # covers ConstraintLayout, FrameLayout, CardView etc. used as
+        # buttons in Material Design apps (contacts, markor, tasks etc.)
+        is_custom_button = clickable and enabled
+
+        if not (is_interactive_class or is_custom_button):
             continue
 
         # For generic views/layouts and plain TextViews, only keep if
-        # clickable. TextView's comment above says "included when
-        # clickable=true" but it used to sit in INTERACTIVE_CLASSES
-        # unconditionally, which let non-interactive labels (e.g. a
-        # screen's title bar) leak into the element list. The LLM would
-        # then tap them, nothing would happen, and it'd tap them again -
-        # a real stuck loop that was entirely avoidable.
+        # clickable+enabled. This prevents non-interactive title labels
+        # from leaking in while still capturing custom-view buttons.
         if class_name in {
             "android.view.View",
             "android.widget.LinearLayout",
             "android.widget.RelativeLayout",
             "android.widget.TextView",
-        } and not clickable:
+            "android.widget.FrameLayout",
+        } and not (clickable and enabled):
             continue
 
         text = (node.get("text") or "").strip()
