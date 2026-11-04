@@ -41,7 +41,7 @@ export function adaptCases(run: Run): CaseView[] {
   return run.test_cases.map((c, i) => {
     const id = String(c.id ?? c.test_case_id ?? `case-${i + 1}`);
     return { id, objective: String(c.objective ?? c.title ?? c.name ?? id), category: c.category || c.type ? String(c.category ?? c.type) : null,
-      setup: c.setup, steps: c.steps, expected: c.expected_result ?? c.expectedResult,
+      setup: c.setup, steps: c.steps, expected: c.expected_result ?? c.expectedResult ?? c.oracle,
       assertions: c.verification ?? c.assertions, cleanup: c.cleanup, preconditions: c.preconditions,
       result: results.get(id) || null, raw: c };
   });

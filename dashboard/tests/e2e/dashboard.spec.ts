@@ -1,7 +1,7 @@
 import { expect, test } from '@playwright/test';
 import { aggregate, architectureTotals } from '../../src/lib/metrics';
 import { filterOptions, filterRows, parseFilters, sortRows } from '../../src/lib/filters';
-import { fixtureRuns, fixtureSummaries } from '../fixtures';
+import { fixtureRuns, fixtureSummaries, run } from '../fixtures';
 test.beforeEach(async ({ page }) => {
   await page.route('**/api/**', async route => {
     const u = new URL(route.request().url()), p = u.searchParams;
@@ -56,6 +56,26 @@ test('matching comparisons show conditions, counts, and denominators', async ({ 
   await expect(page.getByLabel('1 · Platform')).toHaveValue('mobile');
   await expect(page.getByLabel('4 · Run A')).toHaveValue('fixture-mobile-a');
   await expect(page.locator('.comparison-disclaimer')).toContainText('does not automatically mean a better architecture');
+});
+test('web comparisons show concise evidence without timestamps or mobile conditions', async ({ page }) => {
+  const webB = run({
+    run_id: 'fixture-web-b', platform: 'web', architecture: 'B', app_id: 'sample-web', comparison_id: 'web-01',
+    run_details: { exploration_complete: true, stop_reason: 'features_explored', llm: { model: 'fixture-model' } },
+    test_cases: [{ id: 'B01', objective: 'Empty cart remains empty', oracle: 'The cart displays zero products' }],
+    execution_results: [{ id: 'B01', status: 'failed', duration_ms: 123, error: 'Expected zero products but found one' }]
+  });
+  await page.route('**/api/runs/fixture-web-b', route => route.fulfill({ json: { run: webB } }));
+  await page.goto('/compare?a=fixture-web-a&b=fixture-web-b');
+  await expect(page.getByLabel('Selected comparison')).toContainText('web-01');
+  await expect(page.getByText('Execution pass rate', { exact: true })).toHaveCount(2);
+  await expect(page.getByRole('heading', { name: 'Recorded test cases' })).toBeVisible();
+  await expect(page.getByText('The cart displays zero products', { exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Cases requiring attention' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Conditions check' })).toHaveCount(0);
+  await expect(page.getByText(/Recorded categories:/)).toHaveCount(0);
+  await expect(page.getByText(/Recorded case time:/)).toHaveCount(0);
+  await expect(page.getByText(/Last fetched/)).toHaveCount(0);
+  await expect(page.locator('time')).toHaveCount(0);
 });
 test('rejects incomparable runs and recovers from empty selections', async ({ page }) => {
   await page.goto('/compare?a=fixture-mobile-b&b=fixture-web-a'); await expect(page.locator('.error-banner[role=alert]')).toContainText('same platform');

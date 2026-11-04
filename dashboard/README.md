@@ -35,11 +35,13 @@ The supplied scripts bind to loopback, and local-mode API/page guards reject ext
 | Overview | All four architecture cards, honest missing-data states, weighted totals, counts/proportions with accessible table alternatives, exploration reasons, recent runs |
 | Runs | Run-ID search, URL filters, allowed sorts, 10/25/50-row pagination, selection up to 20 runs, CSV and selected JSON export |
 | Run details | Summary; searchable cases and setup/actions/assertions/cleanup; failure explanations and case links; exploration timeline; searchable collapsible original JSON |
-| Compare | Platform → app → comparison ID → A/B runs; matching validation; conditions matrix; grouped outcome counts/proportions; pass rates, categories, and recorded durations |
+| Compare | Platform → app → comparison ID → A/B runs; matching validation; execution completion and pass rates; grouped outcome counts/proportions; side-by-side case objectives and expected checks; failed/flaky case details; conditions matrix for mobile |
 | Exports | CSV for every matching run across pages, complete run JSON, progress and error feedback |
 | Methodology | Metric definitions, architecture descriptions, comparison cautions, unavailable measurements |
 
 There are light/dark themes, mobile navigation, keyboard focus indicators, keyboard tab navigation, manual refresh, and optional 1/5/15-minute refresh (off initially). Filters, detail tabs, case selection/search/status, and comparison selections stay in URLs. Browser requests retain previously loaded results if a refresh fails, with a visible warning. Changed run IDs clear the previous run to avoid presenting another run's evidence as current.
+
+Comparison cards omit timestamps, recorded categories, and recorded case durations. The comparison footer shows Data loaded instead of a fetch time. Web comparisons omit the conditions matrix; mobile comparisons retain it. Expected checks include Architecture B's recorded `oracle` field. These checks are shown as recorded evidence, not as independently validated assertions.
 
 ## Data contract
 

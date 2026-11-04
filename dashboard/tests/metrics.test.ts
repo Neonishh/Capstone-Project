@@ -26,6 +26,10 @@ describe('evidence metrics', () => {
     const c = adaptCases(run({ test_cases: [{ test_case_id: 'W01', title: 'A web case', expectedResult: 'Destination opens', steps: ['Click'] }], execution_results: [{ test_case: 'W01', status: 'passed' }] }))[0];
     expect(c).toMatchObject({ id: 'W01', objective: 'A web case', expected: 'Destination opens', result: { status: 'passed' } }); expect(c.assertions).toBeUndefined();
   });
+  it('uses a vision-run oracle as the expected check without treating it as a validated assertion', () => {
+    const c = adaptCases(run({ test_cases: [{ id: 'B01', objective: 'A vision case', oracle: 'Cart total is visible' }], execution_results: [] }))[0];
+    expect(c).toMatchObject({ id: 'B01', expected: 'Cart total is visible', assertions: undefined });
+  });
   it('labels only recorded case durations and preserves zero', () => { expect(recordedTime(run({ execution_results: [{ duration_ms: 0 }, {}, { duration_ms: -3 }, { duration_ms: 150 }] }))).toEqual({ ms: 150, recorded: 2, total: 4 }); });
   it('never treats missing comparison conditions as equivalent', () => {
     const conditions = comparisonConditions(run(), run());
