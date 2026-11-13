@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { aggregate, architectureTotals } from '../../src/lib/metrics';
+import { aggregate, architectureTotals, summaryFromRun } from '../../src/lib/metrics';
 import { filterOptions, filterRows, parseFilters, sortRows } from '../../src/lib/filters';
 import { fixtureRuns, fixtureSummaries, run } from '../fixtures';
 test.beforeEach(async ({ page }) => {
@@ -76,6 +76,39 @@ test('web comparisons show concise evidence without timestamps or mobile conditi
   await expect(page.getByText(/Recorded case time:/)).toHaveCount(0);
   await expect(page.getByText(/Last fetched/)).toHaveCount(0);
   await expect(page.locator('time')).toHaveCount(0);
+});
+test('compares Web A, B and C from the run selection', async ({ page }) => {
+  const webA = fixtureRuns.find(row => row.run_id === 'fixture-web-a')!;
+  const webB = { ...webA, run_id: 'fixture-web-b', architecture: 'B' as const };
+  const webC = { ...webA, run_id: 'fixture-web-c', architecture: 'C' as const,
+    test_cases: [{ id: 'C01', objective: 'Playwright cart check', expected_result: 'Cart is empty' }],
+    execution_results: [{ id: 'C01', status: 'failed', duration_ms: 200, error: 'Cart contains one item' }]
+  };
+  const rows = [webA, webB, webC].map(summaryFromRun);
+  await page.route(url => url.pathname === '/api/runs', route => route.fulfill({
+    json: { rows, total: rows.length, page: 1, size: 50, options: filterOptions(rows) }
+  }));
+  await page.route('**/api/runs/fixture-web-b', route => route.fulfill({ json: { run: webB } }));
+  await page.route('**/api/runs/fixture-web-c', route => route.fulfill({ json: { run: webC } }));
+
+  await page.goto('/runs?selected=fixture-web-c,fixture-web-a,fixture-web-b');
+  await page.getByRole('link', { name: 'Compare selection' }).click();
+  await expect(page.getByLabel('6 · Run C')).toHaveValue('fixture-web-c');
+  await expect(page.locator('.comparison-run-card')).toHaveCount(3);
+  await expect(page.locator('.comparison-case-column')).toHaveCount(3);
+  await expect(page.getByRole('heading', { name: 'Playwright cart check' })).toBeVisible();
+  await expect(page).toHaveURL(/c=fixture-web-c/);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+
+  await page.getByLabel('6 · Run C').selectOption('');
+  await expect(page.locator('.comparison-run-card')).toHaveCount(2);
+  await expect(page).not.toHaveURL(/c=fixture-web-c/);
+  await page.getByLabel('6 · Run C').selectOption('fixture-web-c');
+  await expect(page.locator('.comparison-run-card')).toHaveCount(3);
+  await page.getByLabel('4 · Run A').selectOption('');
+  await expect(page.locator('.comparison-run-card')).toHaveCount(2);
+  await expect(page.getByLabel('5 · Run B')).toHaveValue('fixture-web-b');
+  await expect(page.getByLabel('6 · Run C')).toHaveValue('fixture-web-c');
 });
 test('rejects incomparable runs and recovers from empty selections', async ({ page }) => {
   await page.goto('/compare?a=fixture-mobile-b&b=fixture-web-a'); await expect(page.locator('.error-banner[role=alert]')).toContainText('same platform');

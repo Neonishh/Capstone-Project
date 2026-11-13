@@ -1,13 +1,13 @@
 -- Shared Supabase setup: use for a fresh project or an existing capstone database.
 -- Preserves stored runs; removes only the unused owner column and rebuilds views.
 begin;
-drop view if exists public.web_a_runs, public.web_b_runs, public.mobile_a_runs, public.mobile_b_runs;
+drop view if exists public.web_a_runs, public.web_b_runs, public.web_c_runs, public.mobile_a_runs, public.mobile_b_runs;
 drop view if exists public.run_summary;
 alter table if exists public.runs drop column if exists owner;
 create table if not exists public.runs (
   run_id text primary key,
   platform text not null check (platform in ('web','mobile')),
-  architecture text not null check (architecture in ('A','B')),
+  architecture text not null,
   app_id text not null,
   comparison_id text not null,
   created_at timestamptz not null,
@@ -18,6 +18,8 @@ create table if not exists public.runs (
 );
 -- Metadata lives in the existing web-compatible JSON object, not view columns.
 alter table public.runs add column if not exists run_details jsonb not null default '{}'::jsonb;
+alter table public.runs drop constraint if exists runs_architecture_check,
+  add constraint runs_architecture_check check (architecture in ('A','B') or (platform='web' and architecture='C'));
 create index if not exists runs_comparison on public.runs(platform, app_id, comparison_id, architecture);
 alter table public.runs enable row level security;
 revoke all on public.runs from anon, authenticated;
@@ -40,8 +42,11 @@ select r.run_id, r.platform, r.architecture, r.app_id,
 from public.runs r;
 create or replace view public.web_a_runs with (security_invoker=true) as select * from public.run_summary where platform='web' and architecture='A';
 create or replace view public.web_b_runs with (security_invoker=true) as select * from public.run_summary where platform='web' and architecture='B';
+create or replace view public.web_c_runs with (security_invoker=true) as select * from public.run_summary where platform='web' and architecture='C';
 create or replace view public.mobile_a_runs with (security_invoker=true) as select * from public.run_summary where platform='mobile' and architecture='A';
 create or replace view public.mobile_b_runs with (security_invoker=true) as select * from public.run_summary where platform='mobile' and architecture='B';
 revoke all on public.run_summary, public.web_a_runs, public.web_b_runs, public.mobile_a_runs, public.mobile_b_runs from anon, authenticated;
+revoke all on public.web_c_runs from public, anon, authenticated;
+grant select on public.web_c_runs to service_role;
 grant select on public.run_summary, public.web_a_runs, public.web_b_runs, public.mobile_a_runs, public.mobile_b_runs to service_role;
 commit;

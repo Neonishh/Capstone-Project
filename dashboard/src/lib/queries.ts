@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { Run, Summary } from './types';
 const count = z.coerce.number().int().min(0);
 const summarySchema = z.object({
-  run_id: z.string(), platform: z.enum(['web', 'mobile']), architecture: z.enum(['A', 'B']),
+  run_id: z.string(), platform: z.enum(['web', 'mobile']), architecture: z.enum(['A', 'B', 'C']),
   app_id: z.string(), comparison_id: z.string(), created_at: z.string(), execution_state: z.string(),
   model: z.string().nullable(), exploration_stop_reason: z.string().nullable(), exploration_complete: z.boolean().nullable(),
   generated: count, executed: count, passed: count, failed: count, skipped: count, timed_out: count, flaky: count

@@ -5,7 +5,7 @@ const text = z.string().trim().max(180).catch('').default('');
 const date = z.string().refine(s => !s || /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(Date.parse(s)) && new Date(s).toISOString().slice(0, 10) === s).catch('').default('');
 export const filterSchema = z.object({
   platform: z.enum(['', 'web', 'mobile']).catch('').default(''),
-  arch: z.preprocess(v => typeof v === 'string' ? v.toUpperCase() : v, z.enum(['', 'A', 'B']).catch('').default('')),
+  arch: z.preprocess(v => typeof v === 'string' ? v.toUpperCase() : v, z.enum(['', 'A', 'B', 'C']).catch('').default('')),
   app: text, cmp: text, model: text, q: text, from: date, to: date,
   state: z.enum(['', 'completed', 'incomplete']).catch('').default(''), reason: text,
   early: z.enum(['', 'true']).catch('').default(''),

@@ -10,7 +10,7 @@ describe('evidence metrics', () => {
   });
   it('distinguishes no execution from zero passes', () => { expect(rateLabel(0, 0)).toBe('—'); expect(rateLabel(0, 2)).toBe('0.0%'); });
   it('keeps empty architectures visible and missing metadata null', () => {
-    const cards = architectureTotals([summary()]); expect(cards).toHaveLength(4); expect(cards.find(a => a.name === 'Web B')).toMatchObject({ runs: 0, latest: null });
+    const cards = architectureTotals([summary()]); expect(cards).toHaveLength(5); expect(cards.find(a => a.name === 'Web C')).toMatchObject({ runs: 0, latest: null }); expect(cards.find(a => a.name === 'Web B')).toMatchObject({ runs: 0, latest: null });
     expect(summaryFromRun(run({ run_details: {} }))).toMatchObject({ model: null, exploration_complete: null, exploration_stop_reason: null });
   });
   it('excludes skipped from execution and includes timeout and flaky outcomes', () => {

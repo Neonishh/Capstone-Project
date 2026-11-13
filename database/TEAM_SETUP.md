@@ -1,6 +1,8 @@
 # Team setup: save your pipeline results in our shared database
 
 Our Supabase database is already created. Do not create another project or run setup.sql.
+
+For an existing project without Web C, apply `migrations/20261113_web_c_runs.sql` once. Web C uses `platform=web`, `architecture=C` and the shared `runs` table. The `web_c_runs` view has the same columns as Web A and Web B. Use the same app and comparison IDs when the experimental scope matches.
 No owner name/ID is needed. Screenshots are not uploaded by these helpers.
 
 ## 1. Get the code
