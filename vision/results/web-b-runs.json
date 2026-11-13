@@ -1,0 +1,2284 @@
+{
+  "schema": "capstone-public-web-run-results-v1",
+  "snapshot_date": "2026-11-13",
+  "source_view": "public.web_b_runs",
+  "runs": [
+    {
+      "run_id": "RUNNER_20261025_f906c2e7-71b9-429a-a908-a8bb61d6f477",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "academybugs",
+      "comparison_id": "web-ab-academybugs-shopper-v1",
+      "created_at": "2026-10-25T16:18:23.72+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "finalizer_requires_pass_for_completed_check",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 11,
+      "executed": 10,
+      "passed": 9,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "R3-C01-listing",
+        "R3-C02-search-denim",
+        "R3-C03-empty-search",
+        "R3-C04-product-detail",
+        "R3-C05-product-option",
+        "R3-C05b-option-green",
+        "R3-C06-cart-identity",
+        "R3-C07-cart-green",
+        "R3-C08-cart-quantity",
+        "R3-C09-line-total",
+        "R3-C10-grand-total-math"
+      ],
+      "case_results": [
+        {
+          "id": "R3-C01-listing",
+          "status": "passed",
+          "duration_ms": 9412
+        },
+        {
+          "id": "R3-C02-search-denim",
+          "status": "passed",
+          "duration_ms": 27643
+        },
+        {
+          "id": "R3-C03-empty-search",
+          "status": "passed",
+          "duration_ms": 15555
+        },
+        {
+          "id": "R3-C04-product-detail",
+          "status": "passed",
+          "duration_ms": 263058
+        },
+        {
+          "id": "R3-C05b-option-green",
+          "status": "passed",
+          "duration_ms": 10024
+        },
+        {
+          "id": "R3-C06-cart-identity",
+          "status": "passed",
+          "duration_ms": 9135
+        },
+        {
+          "id": "R3-C07-cart-green",
+          "status": "passed",
+          "duration_ms": 9290
+        },
+        {
+          "id": "R3-C08-cart-quantity",
+          "status": "passed",
+          "duration_ms": 20535
+        },
+        {
+          "id": "R3-C09-line-total",
+          "status": "passed",
+          "duration_ms": 9713
+        },
+        {
+          "id": "R3-C10-grand-total-math",
+          "status": "failed",
+          "duration_ms": 10640
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261025_925baab2-ec7a-4c8b-bf48-a73ded8d1912",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "thepulper",
+      "comparison_id": "runner-pulper-rerun-20261025-96963832-1692-4fc2-bd01-c04a25c697f3",
+      "created_at": "2026-10-25T17:35:40.32+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "no_progress",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 11,
+      "executed": 6,
+      "passed": 6,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "TP2-C01-list",
+        "TP2-C02-search",
+        "TP2-C03-detail-identity",
+        "TP2-C04-publisher",
+        "TP2-C05-series",
+        "TP2-C06-edit-original",
+        "TP2-C07-unsaved-change",
+        "TP2-C08-reopen-original",
+        "TP2-C09-repeat-search",
+        "TP2-C10-unmatched-query",
+        "TP2-C11-unmatched-result-scope"
+      ],
+      "case_results": [
+        {
+          "id": "TP2-C01-list",
+          "status": "passed",
+          "duration_ms": 12699
+        },
+        {
+          "id": "TP2-C02-search",
+          "status": "passed",
+          "duration_ms": 50174
+        },
+        {
+          "id": "TP2-C03-detail-identity",
+          "status": "passed",
+          "duration_ms": 13199
+        },
+        {
+          "id": "TP2-C05-series",
+          "status": "passed",
+          "duration_ms": 12659
+        },
+        {
+          "id": "TP2-C07-unsaved-change",
+          "status": "passed",
+          "duration_ms": 45097
+        },
+        {
+          "id": "TP2-C09-repeat-search",
+          "status": "passed",
+          "duration_ms": 25146
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261025_6c62a6ca-c8c6-4736-aa5d-2d4ccac5b219",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "qa-practice-bugs-form",
+      "comparison_id": "QA-FORM-R5-6c62a6ca-c8c6",
+      "created_at": "2026-10-25T17:51:48.464+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "ocr_email_echo_unresolved",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 10,
+      "executed": 9,
+      "passed": 8,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "C4-01-form-controls",
+        "C4-02-required-empty",
+        "C4-03-email-format",
+        "C4-04-consent",
+        "C4-06-name-echo",
+        "C4-07-phone-echo",
+        "C4-10-country-echo",
+        "C4-09-password-echo",
+        "C4-08b-email-retry",
+        "C4-05-retained"
+      ],
+      "case_results": [
+        {
+          "id": "C4-01-form-controls",
+          "status": "passed",
+          "duration_ms": 2895
+        },
+        {
+          "id": "C4-02-required-empty",
+          "status": "passed",
+          "duration_ms": 3168
+        },
+        {
+          "id": "C4-03-email-format",
+          "status": "passed",
+          "duration_ms": 407118
+        },
+        {
+          "id": "C4-04-consent",
+          "status": "passed",
+          "duration_ms": 139168
+        },
+        {
+          "id": "C4-06-name-echo",
+          "status": "passed",
+          "duration_ms": 2806
+        },
+        {
+          "id": "C4-07-phone-echo",
+          "status": "passed",
+          "duration_ms": 2981
+        },
+        {
+          "id": "C4-10-country-echo",
+          "status": "passed",
+          "duration_ms": 2659
+        },
+        {
+          "id": "C4-09-password-echo",
+          "status": "failed",
+          "duration_ms": 2844
+        },
+        {
+          "id": "C4-05-retained",
+          "status": "passed",
+          "duration_ms": 15878
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261025_4aa6a346-2348-4022-a4de-960c4c5c13c6",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "practicesoftwaretesting",
+      "comparison_id": "runner-practice-testing-35d20d03-2031-4b4f-9884-958a7ef10655",
+      "created_at": "2026-10-25T18:29:06.366+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "no_progress",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 8,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "PST-C01-catalog-baseline",
+        "PST-C02-category-filter",
+        "PST-C03-price-filter",
+        "PST-C04-sort-select",
+        "PST-C05-product-detail",
+        "PST-C06-detail-price",
+        "PST-C07-stock-status",
+        "PST-C08-cart-control-blocker"
+      ],
+      "case_results": [
+        {
+          "id": "PST-C01-catalog-baseline",
+          "status": "passed",
+          "duration_ms": 32460
+        },
+        {
+          "id": "PST-C02-category-filter",
+          "status": "passed",
+          "duration_ms": 17965
+        },
+        {
+          "id": "PST-C05-product-detail",
+          "status": "passed",
+          "duration_ms": 72297
+        },
+        {
+          "id": "PST-C06-detail-price",
+          "status": "passed",
+          "duration_ms": 15698
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_sweetshop_874b5e8b-8815-4194-a53f-c5a8914ece04",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "sweetshop",
+      "comparison_id": "runner-sweetshop-20261026",
+      "created_at": "2026-10-25T21:07:28.676+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "SS-ADD-02",
+        "SS-DELIVERY-01",
+        "SS-KEYBOARD-01"
+      ],
+      "case_results": [
+        {
+          "id": "SS-ADD-02",
+          "status": "passed",
+          "duration_ms": 92805
+        },
+        {
+          "id": "SS-DELIVERY-01",
+          "status": "passed",
+          "duration_ms": 90049
+        },
+        {
+          "id": "SS-KEYBOARD-01",
+          "status": "passed",
+          "duration_ms": 77371
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_site4calc_0fee7339-1e3e-4526-b994-4c112d3be608",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "testsheepnz_basic_calculator",
+      "comparison_id": "web-ab-testsheep-calculator-v1",
+      "created_at": "2026-10-25T21:11:27.102+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 7,
+      "executed": 7,
+      "passed": 4,
+      "failed": 3,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "calc_add_pos_2_3",
+        "calc_multiply_2_3_retry3",
+        "calc_concat_2_3_retry3",
+        "calc_boundaries_clear_reenter",
+        "calc_integer_5_div_2",
+        "calc_empty_inputs_add",
+        "calc_nonnumeric_add"
+      ],
+      "case_results": [
+        {
+          "id": "calc_add_pos_2_3",
+          "status": "passed",
+          "duration_ms": 83474
+        },
+        {
+          "id": "calc_multiply_2_3_retry3",
+          "status": "passed",
+          "duration_ms": 46854
+        },
+        {
+          "id": "calc_concat_2_3_retry3",
+          "status": "failed",
+          "duration_ms": 68251
+        },
+        {
+          "id": "calc_boundaries_clear_reenter",
+          "status": "passed",
+          "duration_ms": 287622
+        },
+        {
+          "id": "calc_integer_5_div_2",
+          "status": "passed",
+          "duration_ms": 81767
+        },
+        {
+          "id": "calc_empty_inputs_add",
+          "status": "failed",
+          "duration_ms": 65957
+        },
+        {
+          "id": "calc_nonnumeric_add",
+          "status": "failed",
+          "duration_ms": 90131
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_adactin_a2a38a39-b37b-49da-aa7b-bee361dc500d",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "adactin",
+      "comparison_id": "runner-adactin-20261026",
+      "created_at": "2026-10-25T21:23:28.067+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "ADT-LOGIN-01",
+        "ADT-SEARCH-02",
+        "ADT-INCOMPLETE-01",
+        "ADT-CORRECT-01"
+      ],
+      "case_results": [
+        {
+          "id": "ADT-LOGIN-01",
+          "status": "passed",
+          "duration_ms": 48201
+        },
+        {
+          "id": "ADT-SEARCH-02",
+          "status": "passed",
+          "duration_ms": 22131
+        },
+        {
+          "id": "ADT-INCOMPLETE-01",
+          "status": "passed",
+          "duration_ms": 36874
+        },
+        {
+          "id": "ADT-CORRECT-01",
+          "status": "passed",
+          "duration_ms": 133344
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_automationexercise_95019a33-487f-404f-8eb3-c0bfe3c628c3",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "automationexercise",
+      "comparison_id": "runner-automationexercise-20261026",
+      "created_at": "2026-10-25T21:49:51.409+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "AE-LOGIN-INCOMPLETE-01",
+        "AE-PRODUCT-02",
+        "AE-CART-01",
+        "AE-PERSIST-01"
+      ],
+      "case_results": [
+        {
+          "id": "AE-LOGIN-INCOMPLETE-01",
+          "status": "passed",
+          "duration_ms": 30336
+        },
+        {
+          "id": "AE-PRODUCT-02",
+          "status": "passed",
+          "duration_ms": 301447
+        },
+        {
+          "id": "AE-CART-01",
+          "status": "passed",
+          "duration_ms": 45936
+        },
+        {
+          "id": "AE-PERSIST-01",
+          "status": "passed",
+          "duration_ms": 92396
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_practicetest_a3e990aa-aad2-428e-b451-409530e29cb0",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "practicetestautomation_practice",
+      "comparison_id": "RUNNER_20261026_practicetest_a3e990aa-aad2-428e-b451-409530e29cb0",
+      "created_at": "2026-10-25T21:51:41.039+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 5,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "login_valid_and_logout",
+        "login_invalid_rejection_retry",
+        "exceptions_edit_save_add",
+        "exceptions_added_row_mango_retry",
+        "table_filter_sort_compare"
+      ],
+      "case_results": [
+        {
+          "id": "login_valid_and_logout",
+          "status": "passed",
+          "duration_ms": 79738
+        },
+        {
+          "id": "login_invalid_rejection_retry",
+          "status": "passed",
+          "duration_ms": 139854
+        },
+        {
+          "id": "exceptions_edit_save_add",
+          "status": "passed",
+          "duration_ms": 246242
+        },
+        {
+          "id": "exceptions_added_row_mango_retry",
+          "status": "passed",
+          "duration_ms": 18326
+        },
+        {
+          "id": "table_filter_sort_compare",
+          "status": "passed",
+          "duration_ms": 209713
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_inputs_fff539df-6ade-410c-8581-4c93743029e6",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "expandtesting_inputs",
+      "comparison_id": "web-ab-expandtesting-inputs-v1",
+      "created_at": "2026-10-25T22:14:37.463+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 6,
+      "passed": 6,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "AE-INPUT-INITIAL-TEXT-02",
+        "AE-INPUT-INITIAL-NUMBER-01",
+        "AE-INPUT-INITIAL-DATE-01",
+        "AE-INPUT-REENTER-TEXT-01",
+        "AE-INPUT-REENTER-NUMBER-01",
+        "AE-INPUT-REENTER-DATE-01"
+      ],
+      "case_results": [
+        {
+          "id": "AE-INPUT-INITIAL-TEXT-02",
+          "status": "passed",
+          "duration_ms": 17907
+        },
+        {
+          "id": "AE-INPUT-INITIAL-NUMBER-01",
+          "status": "passed",
+          "duration_ms": 15497
+        },
+        {
+          "id": "AE-INPUT-INITIAL-DATE-01",
+          "status": "passed",
+          "duration_ms": 29100
+        },
+        {
+          "id": "AE-INPUT-REENTER-TEXT-01",
+          "status": "passed",
+          "duration_ms": 61746
+        },
+        {
+          "id": "AE-INPUT-REENTER-NUMBER-01",
+          "status": "passed",
+          "duration_ms": 23508
+        },
+        {
+          "id": "AE-INPUT-REENTER-DATE-01",
+          "status": "passed",
+          "duration_ms": 24707
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_letcodeedit_b9bfe4cf-aac1-4c10-929a-6e9459389d39",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "letcode_edit",
+      "comparison_id": "RUNNER_20261026_letcodeedit_b9bfe4cf-aac1-4c10-929a-6e9459389d39",
+      "created_at": "2026-10-25T22:14:43.85+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "access_gate_no_dismiss_control",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 0,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [],
+      "case_results": []
+    },
+    {
+      "run_id": "RUNNER_20261026_qapractice_4f57c996-7ee6-46c4-a84a-1513786845e9",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "qa_practice",
+      "comparison_id": "RUNNER_20261026_qapractice_4f57c996-7ee6-46c4-a84a-1513786845e9",
+      "created_at": "2026-10-25T22:20:18.744+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "text_input_valid_invalid_boundary_correct",
+        "checkbox_single_multiple_change",
+        "select_input_options_resubmit"
+      ],
+      "case_results": [
+        {
+          "id": "text_input_valid_invalid_boundary_correct",
+          "status": "passed",
+          "duration_ms": 358659
+        },
+        {
+          "id": "checkbox_single_multiple_change",
+          "status": "passed",
+          "duration_ms": 321830
+        },
+        {
+          "id": "select_input_options_resubmit",
+          "status": "passed",
+          "duration_ms": 191360
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_lambdatest_6d0cba47-39cf-4c3b-ab17-3940bd9e4474",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "lambdatest_simple_form",
+      "comparison_id": "RUNNER_20261026_lambdatest_6d0cba47-39cf-4c3b-ab17-3940bd9e4474",
+      "created_at": "2026-10-26T05:18:07.496+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "redirect_outside_allowed_origin",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 1,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "message-first-01"
+      ],
+      "case_results": []
+    },
+    {
+      "run_id": "RUNNER_20261026_testpages_1d35b733-e1f7-4052-a266-6a7d8e628211",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "testpages_basic_exercises",
+      "comparison_id": "web-ab-testpages-calculator-table-v1",
+      "created_at": "2026-10-26T05:40:40.501+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 6,
+      "passed": 6,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "form-first-02",
+        "form-reset-second-01",
+        "calc-positive-02",
+        "calc-zero-01",
+        "calc-negative-01",
+        "table-rows-01"
+      ],
+      "case_results": [
+        {
+          "id": "form-first-02",
+          "status": "passed",
+          "duration_ms": 634089
+        },
+        {
+          "id": "form-reset-second-01",
+          "status": "passed",
+          "duration_ms": 706770
+        },
+        {
+          "id": "calc-positive-02",
+          "status": "passed",
+          "duration_ms": 157769
+        },
+        {
+          "id": "calc-zero-01",
+          "status": "passed",
+          "duration_ms": 127593
+        },
+        {
+          "id": "calc-negative-01",
+          "status": "passed",
+          "duration_ms": 51335
+        },
+        {
+          "id": "table-rows-01",
+          "status": "passed",
+          "duration_ms": 166849
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_webdriveruniversity_3ca19304-c14e-4fbf-8a94-9d6013fd30b4",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "webdriveruniversity",
+      "comparison_id": "runner-webdriveruniversity-20261026",
+      "created_at": "2026-10-26T05:41:03.286+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 5,
+      "executed": 5,
+      "passed": 3,
+      "failed": 2,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "WDU-DROPDOWN-01",
+        "WDU-CHECKBOX-01",
+        "WDU-RADIO-01",
+        "WDU-TODO-02",
+        "WDU-TABLE-03"
+      ],
+      "case_results": [
+        {
+          "id": "WDU-DROPDOWN-01",
+          "status": "passed",
+          "duration_ms": 430299
+        },
+        {
+          "id": "WDU-CHECKBOX-01",
+          "status": "failed",
+          "duration_ms": 71574
+        },
+        {
+          "id": "WDU-RADIO-01",
+          "status": "failed",
+          "duration_ms": 85110
+        },
+        {
+          "id": "WDU-TODO-02",
+          "status": "passed",
+          "duration_ms": 280555
+        },
+        {
+          "id": "WDU-TABLE-03",
+          "status": "passed",
+          "duration_ms": 18540
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_bstackdemo_3bf4d3e3-3bd3-49df-9fbe-bde30d83203f",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "bstackdemo",
+      "comparison_id": "web-ab-browserstack-cart-v1",
+      "created_at": "2026-10-26T06:36:37.754+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "BSTACK-FILTER-02",
+        "BSTACK-SORT-01",
+        "BSTACK-CART-01",
+        "BSTACK-REMOVE-01"
+      ],
+      "case_results": [
+        {
+          "id": "BSTACK-FILTER-02",
+          "status": "passed",
+          "duration_ms": 16543
+        },
+        {
+          "id": "BSTACK-SORT-01",
+          "status": "passed",
+          "duration_ms": 53406
+        },
+        {
+          "id": "BSTACK-CART-01",
+          "status": "passed",
+          "duration_ms": 128042
+        },
+        {
+          "id": "BSTACK-REMOVE-01",
+          "status": "passed",
+          "duration_ms": 462719
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_todomvc_cd280c3f-b4c7-4040-bf45-dfd16141098a",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "todomvc_react",
+      "comparison_id": "runner-owner-trial-RUNNER_20261026_todomvc_cd280c3f-b4c7-4040-bf45-dfd16141098a",
+      "created_at": "2026-10-26T06:51:44.117+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "owned_browser_minimized_no_restore",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 0,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [],
+      "case_results": []
+    },
+    {
+      "run_id": "RUNNER_20261026_theinternet_2310ad9b-bbf1-4a09-a12a-40cf0665c857",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "the-internet-herokuapp",
+      "comparison_id": "runner-the-internet-20261026",
+      "created_at": "2026-10-26T07:13:15.894+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 4,
+      "executed": 4,
+      "passed": 4,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "TI-CHECKBOX-01",
+        "TI-DROPDOWN-01",
+        "TI-DYNAMIC-01",
+        "TI-DYNAMIC-02"
+      ],
+      "case_results": [
+        {
+          "id": "TI-CHECKBOX-01",
+          "status": "passed",
+          "duration_ms": 66866
+        },
+        {
+          "id": "TI-DROPDOWN-01",
+          "status": "passed",
+          "duration_ms": 30315
+        },
+        {
+          "id": "TI-DYNAMIC-01",
+          "status": "passed",
+          "duration_ms": 79528
+        },
+        {
+          "id": "TI-DYNAMIC-02",
+          "status": "passed",
+          "duration_ms": 86862
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_coffeecart_e081ac5d-c0fc-46fc-a81d-a288bb93fd4e",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "coffee_cart",
+      "comparison_id": "runner-owner-trial-RUNNER_20261026_coffeecart_e081ac5d-c0fc-46fc-a81d-a288bb93fd4e",
+      "created_at": "2026-10-26T07:14:21.952+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 6,
+      "passed": 5,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "cart-items-quantities-01",
+        "cart-total-01",
+        "remove-and-persist-01",
+        "checkout-inspection-01",
+        "empty-espresso-01",
+        "empty-americano-01"
+      ],
+      "case_results": [
+        {
+          "id": "cart-items-quantities-01",
+          "status": "passed",
+          "duration_ms": 498710
+        },
+        {
+          "id": "cart-total-01",
+          "status": "passed",
+          "duration_ms": 19201
+        },
+        {
+          "id": "remove-and-persist-01",
+          "status": "passed",
+          "duration_ms": 60966
+        },
+        {
+          "id": "checkout-inspection-01",
+          "status": "failed",
+          "duration_ms": 161617
+        },
+        {
+          "id": "empty-espresso-01",
+          "status": "passed",
+          "duration_ms": 42552
+        },
+        {
+          "id": "empty-americano-01",
+          "status": "passed",
+          "duration_ms": 38023
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_demoblaze_740e9924-4535-41c8-8c81-ca432bd70e10",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "demoblaze",
+      "comparison_id": "runner-demoblaze-20261026",
+      "created_at": "2026-10-26T07:39:34.803+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 3,
+      "passed": 2,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "DB-PRODUCT-02",
+        "DB-CAT-02",
+        "DB-CART-02"
+      ],
+      "case_results": [
+        {
+          "id": "DB-PRODUCT-02",
+          "status": "failed",
+          "duration_ms": 80044
+        },
+        {
+          "id": "DB-CAT-02",
+          "status": "passed",
+          "duration_ms": 65654
+        },
+        {
+          "id": "DB-CART-02",
+          "status": "passed",
+          "duration_ms": 41706
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_parkcalc_42befe6f-d5cd-462f-9e20-82f441a7a36e",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "parkcalc",
+      "comparison_id": "web-ab-parkcalc-valet-v1",
+      "created_at": "2026-10-26T07:59:04.112+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "blank_response_verification_unresolved",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 8,
+      "executed": 7,
+      "passed": 7,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "rates-read-01",
+        "short-stay-01",
+        "full-day-01",
+        "overnight-01",
+        "changed-type-01",
+        "exit-before-entry-01",
+        "incomplete-input-02",
+        "corrected-values-01"
+      ],
+      "case_results": [
+        {
+          "id": "rates-read-01",
+          "status": "passed",
+          "duration_ms": 21681
+        },
+        {
+          "id": "short-stay-01",
+          "status": "passed",
+          "duration_ms": 104258
+        },
+        {
+          "id": "full-day-01",
+          "status": "passed",
+          "duration_ms": 137000
+        },
+        {
+          "id": "overnight-01",
+          "status": "passed",
+          "duration_ms": 129275
+        },
+        {
+          "id": "changed-type-01",
+          "status": "passed",
+          "duration_ms": 173802
+        },
+        {
+          "id": "exit-before-entry-01",
+          "status": "passed",
+          "duration_ms": 75699
+        },
+        {
+          "id": "corrected-values-01",
+          "status": "passed",
+          "duration_ms": 122472
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_saucedemo_e7ef12c4-4666-4484-b009-3c98f317aa11",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "saucedemo",
+      "comparison_id": "runner-saucedemo-20261026",
+      "created_at": "2026-10-26T08:14:16.013+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 7,
+      "executed": 7,
+      "passed": 6,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "SD-LOGIN-01",
+        "SD-SORT-01",
+        "SD-CART-ADD-01",
+        "SD-REMOVE-CHECKOUT-01",
+        "SD-INFO-NEG-01",
+        "SD-INFO-OVERVIEW-02",
+        "SD-CANCEL-LOGOUT-01"
+      ],
+      "case_results": [
+        {
+          "id": "SD-LOGIN-01",
+          "status": "passed",
+          "duration_ms": 67501
+        },
+        {
+          "id": "SD-SORT-01",
+          "status": "passed",
+          "duration_ms": 22299
+        },
+        {
+          "id": "SD-CART-ADD-01",
+          "status": "failed",
+          "duration_ms": 115628
+        },
+        {
+          "id": "SD-REMOVE-CHECKOUT-01",
+          "status": "passed",
+          "duration_ms": 30766
+        },
+        {
+          "id": "SD-INFO-NEG-01",
+          "status": "passed",
+          "duration_ms": 75003
+        },
+        {
+          "id": "SD-INFO-OVERVIEW-02",
+          "status": "passed",
+          "duration_ms": 131471
+        },
+        {
+          "id": "SD-CANCEL-LOGOUT-01",
+          "status": "passed",
+          "duration_ms": 108175
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_demowebshop_92bede3b-4a0f-4908-88e1-ce638fe36967",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "demowebshop",
+      "comparison_id": "runner-owner-trial-RUNNER_20261026_demowebshop_92bede3b-4a0f-4908-88e1-ce638fe36967",
+      "created_at": "2026-10-26T08:24:35.103+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 8,
+      "executed": 8,
+      "passed": 8,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "browse-computers-01",
+        "search-product-01",
+        "product-details-01",
+        "cart-item-config-01",
+        "cart-quantity-total-01",
+        "unmatched-search-01",
+        "cart-persistence-01",
+        "remove-empty-cart-01"
+      ],
+      "case_results": [
+        {
+          "id": "browse-computers-01",
+          "status": "passed",
+          "duration_ms": 29015
+        },
+        {
+          "id": "search-product-01",
+          "status": "passed",
+          "duration_ms": 58702
+        },
+        {
+          "id": "product-details-01",
+          "status": "passed",
+          "duration_ms": 74990
+        },
+        {
+          "id": "cart-item-config-01",
+          "status": "passed",
+          "duration_ms": 295050
+        },
+        {
+          "id": "cart-quantity-total-01",
+          "status": "passed",
+          "duration_ms": 109904
+        },
+        {
+          "id": "unmatched-search-01",
+          "status": "passed",
+          "duration_ms": 50873
+        },
+        {
+          "id": "cart-persistence-01",
+          "status": "passed",
+          "duration_ms": 27929
+        },
+        {
+          "id": "remove-empty-cart-01",
+          "status": "passed",
+          "duration_ms": 46121
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_practiceautomation_8413bfae-6f74-49f1-b495-86d508911232",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "practiceautomation",
+      "comparison_id": "practiceautomation_1793024329683",
+      "created_at": "2026-10-26T14:19:00.873+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "form_values_retry_02",
+        "popups_accept_cancel_01",
+        "table_title_retry_02"
+      ],
+      "case_results": [
+        {
+          "id": "table_title_retry_02",
+          "status": "passed",
+          "duration_ms": 20228
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_uitestingplayground_http_3b612c2d-8741-454d-b28c-a61c82c26531",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "uitestingplayground",
+      "comparison_id": "RUNNER_20261026_uitestingplayground_http_3b612c2d-8741-454d-b28c-a61c82c26531",
+      "created_at": "2026-10-26T14:25:43.359+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "progress_stop_timing_unresolved",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "UITP-HTTP-TEXT-01",
+        "UITP-HTTP-AJAX-01",
+        "UITP-HTTP-PROGRESS-04"
+      ],
+      "case_results": [
+        {
+          "id": "UITP-HTTP-TEXT-01",
+          "status": "passed",
+          "duration_ms": 60528
+        },
+        {
+          "id": "UITP-HTTP-AJAX-01",
+          "status": "passed",
+          "duration_ms": 111072
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_buggycars_5ee24ee5-98ff-43af-9d9c-4f9f18a4ef3e",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "buggycars",
+      "comparison_id": "buggycars_1793027423661",
+      "created_at": "2026-10-26T15:10:34.639+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 7,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "popular_make_01",
+        "reventon_detail_01",
+        "signed_out_vote_gate_01",
+        "listing_return_01",
+        "popular_model_listing_01",
+        "diablo_detail_01",
+        "overall_rating_01"
+      ],
+      "case_results": [
+        {
+          "id": "popular_make_01",
+          "status": "passed",
+          "duration_ms": 407914
+        },
+        {
+          "id": "signed_out_vote_gate_01",
+          "status": "passed",
+          "duration_ms": 20056
+        },
+        {
+          "id": "listing_return_01",
+          "status": "passed",
+          "duration_ms": 29720
+        },
+        {
+          "id": "popular_model_listing_01",
+          "status": "passed",
+          "duration_ms": 23211
+        },
+        {
+          "id": "diablo_detail_01",
+          "status": "passed",
+          "duration_ms": 58150
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_orangehrm_e2e3ba96-bcfa-4973-81d9-1fc7d5dc3fd2",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "orangehrm",
+      "comparison_id": "orangehrm_1793028500227",
+      "created_at": "2026-10-26T15:28:28.883+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 5,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "invalid_login_01",
+        "login_dashboard_01",
+        "directory_result_retry_02",
+        "filters_reset_01",
+        "logout_login_retry_02"
+      ],
+      "case_results": [
+        {
+          "id": "invalid_login_01",
+          "status": "passed",
+          "duration_ms": 147556
+        },
+        {
+          "id": "login_dashboard_01",
+          "status": "passed",
+          "duration_ms": 98232
+        },
+        {
+          "id": "directory_result_retry_02",
+          "status": "passed",
+          "duration_ms": 17222
+        },
+        {
+          "id": "filters_reset_01",
+          "status": "passed",
+          "duration_ms": 178943
+        },
+        {
+          "id": "logout_login_retry_02",
+          "status": "passed",
+          "duration_ms": 27417
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_obstaclecourse_e29e2155-da81-4851-8ed7-ab859c302fc9",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "obstaclecourse",
+      "comparison_id": "obstaclecourse_1793031358468",
+      "created_at": "2026-10-26T16:16:08.135+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 1,
+      "executed": 0,
+      "passed": 0,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "text_entry_01"
+      ],
+      "case_results": []
+    },
+    {
+      "run_id": "RUNNER_20261026_demoqa_5a96e7c8-d967-44da-b4f2-93a5fef6bc83",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "demoqa",
+      "comparison_id": "RUNNER_20261026_demoqa_5a96e7c8-d967-44da-b4f2-93a5fef6bc83",
+      "created_at": "2026-10-26T16:24:32.558+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "other",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 2,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "DQ-TEXTBOX-02",
+        "DQ-CHECKBOX-02"
+      ],
+      "case_results": [
+        {
+          "id": "DQ-CHECKBOX-02",
+          "status": "passed",
+          "duration_ms": 55300
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_realworld_d72cc46a-feeb-46fd-aecf-a0fa33b6eb5c",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "realworld",
+      "comparison_id": "web-ab-realworld-feed-v1",
+      "created_at": "2026-10-26T16:38:44.54+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 5,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "global_feed_entry_01",
+        "article_detail_01",
+        "author_profile_01",
+        "javascript_tag_retry_02",
+        "feed_return_01"
+      ],
+      "case_results": [
+        {
+          "id": "global_feed_entry_01",
+          "status": "passed",
+          "duration_ms": 18828
+        },
+        {
+          "id": "article_detail_01",
+          "status": "passed",
+          "duration_ms": 35086
+        },
+        {
+          "id": "author_profile_01",
+          "status": "passed",
+          "duration_ms": 38055
+        },
+        {
+          "id": "javascript_tag_retry_02",
+          "status": "passed",
+          "duration_ms": 33944
+        },
+        {
+          "id": "feed_return_01",
+          "status": "passed",
+          "duration_ms": 37012
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_demoqa_retry_6e8f1b21-bf4f-49ef-9c15-70998a301c21",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "demoqa",
+      "comparison_id": "RUNNER_20261026_demoqa_retry_6e8f1b21-bf4f-49ef-9c15-70998a301c21",
+      "created_at": "2026-10-26T16:53:01.13+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "DQ-WT-RETRY-ADD-01",
+        "DQ-WT-EDIT-01",
+        "DQ-WT-DELETE-01"
+      ],
+      "case_results": [
+        {
+          "id": "DQ-WT-RETRY-ADD-01",
+          "status": "passed",
+          "duration_ms": 154549
+        },
+        {
+          "id": "DQ-WT-EDIT-01",
+          "status": "passed",
+          "duration_ms": 126683
+        },
+        {
+          "id": "DQ-WT-DELETE-01",
+          "status": "passed",
+          "duration_ms": 84275
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_w3cbaddemo_f11a3694-6f26-42cf-a48b-c85e91e6a7f5",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "w3cbaddemo",
+      "comparison_id": "w3cbaddemo_1793036288523",
+      "created_at": "2026-10-26T17:38:19.182+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 7,
+      "executed": 7,
+      "passed": 7,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "home_before_01",
+        "home_after_01",
+        "tickets_after_01",
+        "tickets_before_01",
+        "survey_before_01",
+        "survey_after_01",
+        "survey_clear_01"
+      ],
+      "case_results": [
+        {
+          "id": "home_before_01",
+          "status": "passed",
+          "duration_ms": 18596
+        },
+        {
+          "id": "home_after_01",
+          "status": "passed",
+          "duration_ms": 18036
+        },
+        {
+          "id": "tickets_after_01",
+          "status": "passed",
+          "duration_ms": 19325
+        },
+        {
+          "id": "tickets_before_01",
+          "status": "passed",
+          "duration_ms": 19947
+        },
+        {
+          "id": "survey_before_01",
+          "status": "passed",
+          "duration_ms": 19647
+        },
+        {
+          "id": "survey_after_01",
+          "status": "passed",
+          "duration_ms": 19578
+        },
+        {
+          "id": "survey_clear_01",
+          "status": "passed",
+          "duration_ms": 91169
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261026_demoqa_retry_eb7654a3-2990-43b8-b65d-9aaaf851a983",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "demoqa",
+      "comparison_id": "web-ab-demoqa-textbox-checkbox-v1",
+      "created_at": "2026-10-26T18:12:27.593+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "DQ-RETRY-TEXT-NAME-01",
+        "DQ-RETRY-TEXT-EMAIL-01",
+        "DQ-RETRY-TEXT-ADDRESS-01",
+        "DQ-RETRY-CHECK-SELECT-01",
+        "DQ-RETRY-CHECK-DESELECT-01",
+        "DQ-RETRY-TABLE-ADD-SEARCH-01"
+      ],
+      "case_results": [
+        {
+          "id": "DQ-RETRY-TEXT-NAME-01",
+          "status": "passed",
+          "duration_ms": 510396
+        },
+        {
+          "id": "DQ-RETRY-TEXT-EMAIL-01",
+          "status": "passed",
+          "duration_ms": 104408
+        },
+        {
+          "id": "DQ-RETRY-TEXT-ADDRESS-01",
+          "status": "passed",
+          "duration_ms": 104187
+        },
+        {
+          "id": "DQ-RETRY-CHECK-SELECT-01",
+          "status": "passed",
+          "duration_ms": 441959
+        },
+        {
+          "id": "DQ-RETRY-CHECK-DESELECT-01",
+          "status": "passed",
+          "duration_ms": 104751
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_parabank_41429e90-c616-4b3b-9feb-0442c71935ef",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "parabank",
+      "comparison_id": "parabank-0442c71935ef",
+      "created_at": "2026-10-26T19:00:11.985+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 4,
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "PB-HOME-02",
+        "PB-LOGIN-EMPTY-01",
+        "PB-LOGIN-INVALID-01",
+        "PB-REGISTER-NAME-02"
+      ],
+      "case_results": [
+        {
+          "id": "PB-HOME-02",
+          "status": "passed",
+          "duration_ms": 104667
+        },
+        {
+          "id": "PB-LOGIN-EMPTY-01",
+          "status": "passed",
+          "duration_ms": 105943
+        },
+        {
+          "id": "PB-LOGIN-INVALID-01",
+          "status": "passed",
+          "duration_ms": 327148
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_datatables_9a5af421-9fe2-4fa0-b8d6-a9f964b016f1",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "datatables",
+      "comparison_id": "RUNNER_20261027_datatables_9a5af421-9fe2-4fa0-b8d6-a9f964b016f1",
+      "created_at": "2026-10-26T20:01:29.043+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 3,
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "baseline_table_01",
+        "search_name_retry_02",
+        "search_office_01"
+      ],
+      "case_results": [
+        {
+          "id": "baseline_table_01",
+          "status": "passed",
+          "duration_ms": 62540
+        },
+        {
+          "id": "search_name_retry_02",
+          "status": "passed",
+          "duration_ms": 156190
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_jqueryui_retry_a8341d27-a690-4527-9306-9d617c1658a3",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "jqueryui",
+      "comparison_id": "jqueryui-022ac5cdc2e9",
+      "created_at": "2026-10-27T05:46:21.503+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "other",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 8,
+      "executed": 7,
+      "passed": 7,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "JQ-RETRY-ACC2-01",
+        "JQ-RETRY-ACC3-01",
+        "JQ-RETRY-TABS-FIRST-02",
+        "JQ-RETRY-TABS-SECOND-01",
+        "JQ-RETRY-TABS-THIRD-01",
+        "JQ-RETRY-DATE-SET-01",
+        "JQ-RETRY-DATE-CHANGE-03",
+        "JQ-RETRY-DATE-CLEAR-01"
+      ],
+      "case_results": [
+        {
+          "id": "JQ-RETRY-ACC2-01",
+          "status": "passed",
+          "duration_ms": 152496
+        },
+        {
+          "id": "JQ-RETRY-ACC3-01",
+          "status": "passed",
+          "duration_ms": 107816
+        },
+        {
+          "id": "JQ-RETRY-TABS-FIRST-02",
+          "status": "passed",
+          "duration_ms": 118919
+        },
+        {
+          "id": "JQ-RETRY-TABS-SECOND-01",
+          "status": "passed",
+          "duration_ms": 113798
+        },
+        {
+          "id": "JQ-RETRY-TABS-THIRD-01",
+          "status": "passed",
+          "duration_ms": 112508
+        },
+        {
+          "id": "JQ-RETRY-DATE-SET-01",
+          "status": "passed",
+          "duration_ms": 589802
+        },
+        {
+          "id": "JQ-RETRY-DATE-CLEAR-01",
+          "status": "passed",
+          "duration_ms": 255762
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_reactshoppingcart_ab65df6d-c67c-4175-ba89-6518c3bb0bf5",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "reactshoppingcart",
+      "comparison_id": "RUNNER_20261027_reactshoppingcart_ab65df6d-c67c-4175-ba89-6518c3bb0bf5",
+      "created_at": "2026-10-27T07:53:35.234+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "no_progress",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 8,
+      "executed": 2,
+      "passed": 2,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "size_filter_s_01",
+        "size_filter_m_01",
+        "price_sorting_01",
+        "add_two_products_01",
+        "quantity_line_amount_01",
+        "quantity_subtotal_01",
+        "remove_cart_item_01",
+        "empty_cart_01"
+      ],
+      "case_results": [
+        {
+          "id": "size_filter_s_01",
+          "status": "passed",
+          "duration_ms": 19783
+        },
+        {
+          "id": "size_filter_m_01",
+          "status": "passed",
+          "duration_ms": 18210
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_globalsqa_final_795a5a1e-194f-4942-9c3a-49bf09d56672",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "globalsqa_banking",
+      "comparison_id": "web-ab-globalsqa-banking-v1",
+      "created_at": "2026-10-27T08:54:11.811+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "other",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 8,
+      "executed": 7,
+      "passed": 6,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "GQ-FINAL-CUSTOMER-01",
+        "GQ-FINAL-DEPOSIT-01",
+        "GQ-FINAL-WITHDRAW-04",
+        "GQ-FINAL-TRANSACTIONS-01",
+        "GQ-FINAL-LEDGER-DEPOSIT-01",
+        "GQ-FINAL-OVERDRAFT-01",
+        "GQ-FINAL-OVERDRAFT-BALANCE-01",
+        "GQ-FINAL-LOGOUT-01"
+      ],
+      "case_results": [
+        {
+          "id": "GQ-FINAL-CUSTOMER-01",
+          "status": "passed",
+          "duration_ms": 287946
+        },
+        {
+          "id": "GQ-FINAL-DEPOSIT-01",
+          "status": "passed",
+          "duration_ms": 188477
+        },
+        {
+          "id": "GQ-FINAL-WITHDRAW-04",
+          "status": "passed",
+          "duration_ms": 33707
+        },
+        {
+          "id": "GQ-FINAL-TRANSACTIONS-01",
+          "status": "passed",
+          "duration_ms": 40630
+        },
+        {
+          "id": "GQ-FINAL-LEDGER-DEPOSIT-01",
+          "status": "failed",
+          "duration_ms": 22302
+        },
+        {
+          "id": "GQ-FINAL-OVERDRAFT-01",
+          "status": "passed",
+          "duration_ms": 102695
+        },
+        {
+          "id": "GQ-FINAL-OVERDRAFT-BALANCE-01",
+          "status": "passed",
+          "duration_ms": 22494
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_blazedemo_final_f618481c-19f8-4a29-8a12-c3ba0397e353",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "blazedemo",
+      "comparison_id": "RUNNER_20261027_blazedemo_final_f618481c-19f8-4a29-8a12-c3ba0397e353",
+      "created_at": "2026-10-27T09:20:46.767+00:00",
+      "execution_state": "completed",
+      "exploration_stop_reason": "goal_completed",
+      "exploration_complete": true,
+      "model": "gpt-6-luna",
+      "generated": 5,
+      "executed": 5,
+      "passed": 4,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "route_one_01",
+        "select_flight_01",
+        "price_plus_fees_01",
+        "fictional_passenger_01",
+        "route_two_01"
+      ],
+      "case_results": [
+        {
+          "id": "route_one_01",
+          "status": "passed",
+          "duration_ms": 59003
+        },
+        {
+          "id": "select_flight_01",
+          "status": "failed",
+          "duration_ms": 29819
+        },
+        {
+          "id": "price_plus_fees_01",
+          "status": "passed",
+          "duration_ms": 25188
+        },
+        {
+          "id": "fictional_passenger_01",
+          "status": "passed",
+          "duration_ms": 78700
+        },
+        {
+          "id": "route_two_01",
+          "status": "passed",
+          "duration_ms": 104367
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_seleniumbase_controls_7608332d-5f6e-48e2-9609-928971bf7439",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "seleniumbase",
+      "comparison_id": "RUNNER_20261027_seleniumbase_controls_7608332d-5f6e-48e2-9609-928971bf7439",
+      "created_at": "2026-10-27T09:25:38.212+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 1,
+      "passed": 0,
+      "failed": 1,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "SB-TEXT-01",
+        "SB-PREFILL-01",
+        "SB-TEXTAREA-02",
+        "SB-READONLY-01",
+        "SB-DROPDOWN-02",
+        "SB-RADIO-01"
+      ],
+      "case_results": [
+        {
+          "id": "SB-DROPDOWN-02",
+          "status": "failed",
+          "duration_ms": 41835
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261027_bonigarcia_8ece84e4-68bb-49b0-9332-5e032df8d1f9",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "bonigarcia_selenium_webdriver_java",
+      "comparison_id": "RUNNER_20261027_bonigarcia_8ece84e4-68bb-49b0-9332-5e032df8d1f9",
+      "created_at": "2026-10-27T10:17:48.441+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "service_failure",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 2,
+      "executed": 1,
+      "passed": 1,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "BONI-FORM-TEXT-01",
+        "BONI-FORM-TEXTAREA-01"
+      ],
+      "case_results": [
+        {
+          "id": "BONI-FORM-TEXT-01",
+          "status": "passed",
+          "duration_ms": 81256
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261111_wikipedia_760b3a0e-fd1b-4b76-8de5-662c278a18db",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "wikipedia",
+      "comparison_id": "live-wikipedia-v1-20261111",
+      "created_at": "2026-11-11T14:11:04.097+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "other",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "WIKI_SOLAR_SYSTEM_01_R2",
+        "WIKI_SUN_LINK_02",
+        "WIKI_EARTH_SEARCH_03",
+        "WIKI_NO_MATCH_04",
+        "WIKI_RECOVER_SOLAR_SYSTEM_05",
+        "WIKI_CASEFOLD_SOLAR_SYSTEM_06"
+      ],
+      "case_results": [
+        {
+          "id": "WIKI_SOLAR_SYSTEM_01_R2",
+          "status": "passed",
+          "duration_ms": 50163
+        },
+        {
+          "id": "WIKI_EARTH_SEARCH_03",
+          "status": "passed",
+          "duration_ms": 54877
+        },
+        {
+          "id": "WIKI_NO_MATCH_04",
+          "status": "passed",
+          "duration_ms": 34878
+        },
+        {
+          "id": "WIKI_RECOVER_SOLAR_SYSTEM_05",
+          "status": "passed",
+          "duration_ms": 121381
+        },
+        {
+          "id": "WIKI_CASEFOLD_SOLAR_SYSTEM_06",
+          "status": "passed",
+          "duration_ms": 55351
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261111_calculator_percentage_81c988ba-f830-4671-9657-b235d8f8faa4",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "calculator_percentage",
+      "comparison_id": "live-calculator-percentage-v1-20261111",
+      "created_at": "2026-11-11T14:12:16.462+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "no_progress",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 7,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "public_ui.C1",
+        "public_ui.C2",
+        "public_ui.C3",
+        "public_ui.C4",
+        "public_ui.C5.retry1",
+        "public_ui.C6",
+        "public_ui.C7"
+      ],
+      "case_results": [
+        {
+          "id": "public_ui.C1",
+          "status": "passed",
+          "duration_ms": 199488
+        },
+        {
+          "id": "public_ui.C2",
+          "status": "passed",
+          "duration_ms": 65818
+        },
+        {
+          "id": "public_ui.C3",
+          "status": "passed",
+          "duration_ms": 60930
+        },
+        {
+          "id": "public_ui.C4",
+          "status": "passed",
+          "duration_ms": 61639
+        },
+        {
+          "id": "public_ui.C7",
+          "status": "passed",
+          "duration_ms": 91848
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261111_wordpress_plugins_340f5ca9-f537-48d4-9726-4db2f9fb0700",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "wordpress_plugins",
+      "comparison_id": "live-wordpress-plugins-v1-20261111",
+      "created_at": "2026-11-11T14:43:05.403+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "no_progress",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 7,
+      "executed": 6,
+      "passed": 6,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "public_ui.C1",
+        "public_ui.C2.retry1",
+        "public_ui.C3",
+        "public_ui.C4",
+        "public_ui.C5",
+        "public_ui.C6",
+        "public_ui.C7"
+      ],
+      "case_results": [
+        {
+          "id": "public_ui.C1",
+          "status": "passed",
+          "duration_ms": 31206
+        },
+        {
+          "id": "public_ui.C2.retry1",
+          "status": "passed",
+          "duration_ms": 38024
+        },
+        {
+          "id": "public_ui.C3",
+          "status": "passed",
+          "duration_ms": 27168
+        },
+        {
+          "id": "public_ui.C4",
+          "status": "passed",
+          "duration_ms": 28727
+        },
+        {
+          "id": "public_ui.C5",
+          "status": "passed",
+          "duration_ms": 162224
+        },
+        {
+          "id": "public_ui.C7",
+          "status": "passed",
+          "duration_ms": 65094
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261111_mdn_docs_c5e15a95-7aa8-446c-aac1-84e2bcdc8947",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "mdn_docs",
+      "comparison_id": "live-mdn-docs-v1-20261111",
+      "created_at": "2026-11-11T16:22:31.507+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "no_progress",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 6,
+      "executed": 5,
+      "passed": 5,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "public_ui.C1",
+        "public_ui.C2",
+        "public_ui.C3",
+        "public_ui.C4",
+        "public_ui.C5",
+        "public_ui.C6.retry1"
+      ],
+      "case_results": [
+        {
+          "id": "public_ui.C1",
+          "status": "passed",
+          "duration_ms": 56894
+        },
+        {
+          "id": "public_ui.C2",
+          "status": "passed",
+          "duration_ms": 26742
+        },
+        {
+          "id": "public_ui.C3",
+          "status": "passed",
+          "duration_ms": 123787
+        },
+        {
+          "id": "public_ui.C4",
+          "status": "passed",
+          "duration_ms": 59735
+        },
+        {
+          "id": "public_ui.C6.retry1",
+          "status": "passed",
+          "duration_ms": 35355
+        }
+      ]
+    },
+    {
+      "run_id": "RUNNER_20261111_govuk_da52f5f8-4122-47ff-bccf-f56f5f656b1a",
+      "platform": "web",
+      "architecture": "B",
+      "app_id": "govuk",
+      "comparison_id": "live-govuk-guidance-v1-20261111",
+      "created_at": "2026-11-11T16:23:14.853+00:00",
+      "execution_state": "incomplete",
+      "exploration_stop_reason": "other",
+      "exploration_complete": false,
+      "model": "gpt-6-luna",
+      "generated": 4,
+      "executed": 3,
+      "passed": 3,
+      "failed": 0,
+      "timed_out": 0,
+      "skipped": 0,
+      "flaky": 0,
+      "case_ids": [
+        "GOVUK_PASSPORT_GUIDE_01",
+        "GOVUK_RENEW_OVERVIEW_NAV_02",
+        "GOVUK_NO_MATCH_03",
+        "GOVUK_RECOVERY_ADULT_PASSPORT_04"
+      ],
+      "case_results": [
+        {
+          "id": "GOVUK_PASSPORT_GUIDE_01",
+          "status": "passed",
+          "duration_ms": 51348
+        },
+        {
+          "id": "GOVUK_RENEW_OVERVIEW_NAV_02",
+          "status": "passed",
+          "duration_ms": 57507
+        },
+        {
+          "id": "GOVUK_RECOVERY_ADULT_PASSPORT_04",
+          "status": "passed",
+          "duration_ms": 54317
+        }
+      ]
+    }
+  ]
+}
