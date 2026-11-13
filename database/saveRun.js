@@ -5,13 +5,14 @@ const crypto = require('node:crypto');
 const aliases = { expected: 'passed', unexpected: 'failed', timedOut: 'timed_out' };
 const statuses = new Set(['passed', 'failed', 'skipped', 'timed_out', 'flaky']);
 
-function normalizeResults(results) {
+function normalizeResults(results, allowUnknownDuration = false) {
   if (!Array.isArray(results)) throw new Error('execution_results must be an array');
   const ids = new Set();
   return results.map(r => {
     const status = aliases[r.status] || r.status;
-    const duration = Number(r.duration_ms ?? r.durationMs ?? 0);
-    if (!r.id || ids.has(r.id) || !statuses.has(status) || !Number.isFinite(duration) || duration < 0) {
+    const duration = allowUnknownDuration && (r.duration_ms ?? r.durationMs) == null
+      ? null : Number(r.duration_ms ?? r.durationMs ?? 0);
+    if (!r.id || ids.has(r.id) || !statuses.has(status) || (duration !== null && (!Number.isFinite(duration) || duration < 0))) {
       throw new Error('Results require unique test IDs, supported statuses and nonnegative durations');
     }
     ids.add(r.id);
@@ -24,7 +25,8 @@ function validate(run) {
   for (const key of ['run_id','app_id','comparison_id','created_at']) {
     if (typeof run[key] !== 'string' || !run[key].trim()) throw new Error(`Missing ${key}`);
   }
-  if (!['web','mobile'].includes(run.platform) || !['A','B'].includes(run.architecture)) throw new Error('Invalid platform/architecture');
+  if (!['web','mobile'].includes(run.platform) ||
+      !(['A','B'].includes(run.architecture) || (run.platform === 'web' && run.architecture === 'C'))) throw new Error('Invalid platform/architecture');
   if (!['completed','incomplete'].includes(run.execution_state)) throw new Error('Invalid execution_state');
   if (Number.isNaN(Date.parse(run.created_at))) throw new Error('Invalid created_at');
   if (!Array.isArray(run.memory_log) || !Array.isArray(run.test_cases)) throw new Error('Logs/cases must be arrays');
@@ -49,7 +51,7 @@ function validate(run) {
   if (Object.keys(llm).length) details.llm = llm;
   const ids = run.test_cases.map(t => t.id);
   if (ids.some(id => typeof id !== 'string' || !id) || new Set(ids).size !== ids.length) throw new Error('Test cases require unique string IDs');
-  const normalized = normalizeResults(run.execution_results);
+  const normalized = normalizeResults(run.execution_results, run.architecture === 'C');
   if (normalized.some(r => !ids.includes(r.id))) throw new Error('Result ID not found in test cases');
   if (run.execution_state === 'completed' && (ids.length === 0 || normalized.length !== ids.length)) throw new Error('Completed runs must have a result for every case');
   const { owner, model, exploration_stop_reason, exploration_complete, ...data } = run; // omit legacy owner from queued bundles

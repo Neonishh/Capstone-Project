@@ -4,6 +4,7 @@ export const outcomeNames = { passed: 'Passed', failed: 'Failed', skipped: 'Skip
 export const architectureNames = [
   { platform: 'web', architecture: 'A', name: 'Web A', description: 'Structure-based web' },
   { platform: 'web', architecture: 'B', name: 'Web B', description: 'Vision-based web' },
+  { platform: 'web', architecture: 'C', name: 'Web C', description: 'Microsoft Playwright Test Agents' },
   { platform: 'mobile', architecture: 'A', name: 'Mobile A', description: 'Structure-based mobile' },
   { platform: 'mobile', architecture: 'B', name: 'Mobile B', description: 'Vision-based mobile' }
 ] as const;

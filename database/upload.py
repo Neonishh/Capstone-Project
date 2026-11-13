@@ -10,7 +10,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--env')
     parser.add_argument('--platform', required=True, choices=['web', 'mobile'])
-    parser.add_argument('--architecture', required=True, choices=['A', 'B'])
+    parser.add_argument('--architecture', required=True, choices=['A', 'B', 'C'])
     for name in ('app', 'comparison', 'run-id', 'memory', 'cases', 'results'):
         parser.add_argument('--' + name, required=True)
     parser.add_argument('--state', choices=['completed', 'incomplete'], default='completed')

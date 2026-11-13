@@ -57,7 +57,10 @@ def validate(run):
         details['llm'] = llm
     run['run_details'] = details
 
-    if run.get('platform') not in ('web', 'mobile') or run.get('architecture') not in ('A', 'B'):
+    platform, architecture = run.get('platform'), run.get('architecture')
+    if platform not in ('web', 'mobile') or not (
+        architecture in ('A', 'B') or (platform == 'web' and architecture == 'C')
+    ):
         raise ValueError('Invalid platform/architecture')
     if run.get('execution_state') not in ('completed', 'incomplete'):
         raise ValueError('Invalid execution_state')
@@ -70,8 +73,9 @@ def validate(run):
     results, seen = [], set()
     for r in run['execution_results']:
         status = ALIASES.get(r['status'], r['status'])
-        duration = float(r.get('duration_ms', r.get('durationMs', 0)))
-        if r.get('id') not in ids or r['id'] in seen or status not in STATUSES or not math.isfinite(duration) or duration < 0:
+        raw_duration = r.get('duration_ms', r.get('durationMs'))
+        duration = None if architecture == 'C' and raw_duration is None else float(r.get('duration_ms', r.get('durationMs', 0)))
+        if r.get('id') not in ids or r['id'] in seen or status not in STATUSES or (duration is not None and (not math.isfinite(duration) or duration < 0)):
             raise ValueError('Invalid result ID/status/duration')
         seen.add(r['id'])
         results.append(dict(id=r['id'], status=status, duration_ms=duration,

@@ -30,7 +30,7 @@ def snapshot(runs, output):
         counts = ','.join("(select count(*) from json_each(r.execution_results) e where json_extract(e.value,'$.status')='" + status + "') as " + status for status in ('passed','failed','timed_out','skipped','flaky'))
         db.execute("CREATE VIEW run_summary AS SELECT run_id,platform,architecture,app_id,comparison_id,created_at,execution_state,json_extract(run_details,'$.stop_reason') as exploration_stop_reason,json_extract(run_details,'$.exploration_complete') as exploration_complete,json_extract(run_details,'$.llm.model') as model,json_array_length(test_cases) as generated,(select count(*) from json_each(r.execution_results) e where json_extract(e.value,'$.status') <> 'skipped') as executed," + counts + ' FROM runs r')
         for platform in ('web', 'mobile'):
-            for arch in ('A', 'B'):
+            for arch in (('A', 'B', 'C') if platform == 'web' else ('A', 'B')):
                 db.execute(f"CREATE VIEW {platform}_{arch.lower()}_runs AS SELECT * FROM run_summary WHERE platform='{platform}' AND architecture='{arch}'")
         db.execute('CREATE TABLE snapshot_metadata (exported_at TEXT, run_count INTEGER)')
         db.execute('INSERT INTO snapshot_metadata VALUES (?,?)', (datetime.now(timezone.utc).isoformat(), len(runs)))

@@ -1,6 +1,6 @@
 # Capstone QA Observatory
 
-A separate, read-only Next.js dashboard for the four testing architectures. It uses your existing Supabase `runs` table and `run_summary` view. Pipelines upload independently; the dashboard does not run tests or modify database records.
+A separate, read-only Next.js dashboard for the five web and mobile architecture groups. It uses your existing Supabase `runs` table and `run_summary` view. Pipelines upload independently; the dashboard does not run tests or modify database records.
 
 ## Run locally
 
@@ -32,10 +32,10 @@ The supplied scripts bind to loopback, and local-mode API/page guards reject ext
 
 | Page | Features |
 | --- | --- |
-| Overview | All four architecture cards, honest missing-data states, weighted totals, counts/proportions with accessible table alternatives, exploration reasons, recent runs |
+| Overview | All five architecture cards, honest missing-data states, weighted totals, counts/proportions with accessible table alternatives, exploration reasons, recent runs |
 | Runs | Run-ID search, URL filters, allowed sorts, 10/25/50-row pagination, selection up to 20 runs, CSV and selected JSON export |
 | Run details | Summary; searchable cases and setup/actions/assertions/cleanup; failure explanations and case links; exploration timeline; searchable collapsible original JSON |
-| Compare | Platform → app → comparison ID → A/B runs; matching validation; execution completion and pass rates; grouped outcome counts/proportions; side-by-side case objectives and expected checks; failed/flaky case details; conditions matrix for mobile |
+| Compare | Platform → app → comparison ID → two or three matching runs (Web A/B/C or Mobile A/B); matching validation; execution completion and pass rates; grouped outcome counts/proportions; side-by-side case objectives and expected checks; failed/flaky case details; conditions matrix for mobile |
 | Exports | CSV for every matching run across pages, complete run JSON, progress and error feedback |
 | Methodology | Metric definitions, architecture descriptions, comparison cautions, unavailable measurements |
 
@@ -113,7 +113,7 @@ Keep `DASHBOARD_AUTH_MODE=local` for this loopback-only demonstration. Stop an e
 ## Troubleshooting and deliberate limits
 
 - **Database summaries unavailable:** check the server credentials, internet access, and shared views. If the existing project lacks `run_summary` or JSON metadata columns, follow the database team's migration instructions. The dashboard does not run schema migrations automatically.
-- **No runs available:** upload a run from the corresponding testing pipeline, then refresh. All four architectures are not required to start using the dashboard.
+- **No runs available:** upload a run from the corresponding testing pipeline, then refresh. The dashboard works with any available architecture group.
 - **Missing model/device/version:** historical metadata was not recorded. Current `.env` values do not relabel old runs.
 - **Evidence stored locally:** screenshot/video paths are references, not hosted downloads. Private artifact storage and durable references are future pipeline work.
 - **Comparison unavailable:** A and B need the same platform, app, and comparison ID. Equal IDs do not establish equal models, budgets, fixtures, or devices; inspect the conditions matrix.
